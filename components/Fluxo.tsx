@@ -362,10 +362,11 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
     }
   };
 
-  const auditGridCols = "grid-cols-[0.4fr_0.4fr_0.7fr_1.1fr_0.8fr_0.7fr_0.5fr_0.8fr_0.8fr_0.8fr_0.9fr_0.6fr_1.0fr]";
+  // Grade para Execução Operacional: Ajustada para unidades fracionárias (fr) para respeitar exatamente 100% da largura
+  const auditGridCols = "grid-cols-[5fr_5fr_10fr_10fr_10fr_10fr_5fr_10fr_5fr_5fr_10fr_5fr_10fr]";
 
-  // Grade para o consumo diário - Alinhada visualmente ao auditGridCols mas simplificada
-  const dailyGridCols = "grid-cols-[0.8fr_0.8fr_2fr_1.1fr_0.7fr_auto]";
+  // Grade para o consumo diário - Proporção 100%/5 (20% cada coluna)
+  const dailyGridCols = "grid-cols-5";
 
   const getTranslation = (key: string) => {
     const dict: Record<string, string> = {
@@ -377,11 +378,11 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
       subCategory: 'TAG',
       installments: 'PARCELA',
       estimatedValue: 'VALOR',
-      dueDate: 'VENC.',
-      paymentDate: 'PAGAM.',
-      PONTUALIDADE: 'PONTUAL.',
+      dueDate: 'VENCIMENTO',
+      paymentDate: 'PAGAMENTO',
+      PONTUALIDADE: 'PONTUALIDADE',
       hasOverride: 'AJUSTE',
-      observation: 'OBS.'
+      observation: 'OBSERVAÇÃO'
     };
     return dict[key] || key.toUpperCase();
   };
@@ -468,30 +469,38 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
               </div>
             )}
 
-            <div className="flex-grow flex flex-col min-h-0">
-              <div className={`grid ${auditGridCols} gap-2 px-4 py-2.5 bg-slate-900 dark:bg-[#020617] text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 sticky top-0 z-10 items-center`}>
-                {['status', 'order', 'debtType', 'item', 'category', 'subCategory', 'installments', 'estimatedValue', 'dueDate', 'paymentDate', 'PONTUALIDADE', 'hasOverride', 'observation'].map(k => (<button key={k} onClick={() => k !== 'PONTUALIDADE' && handleSort(k as any)} className="py-1 px-1 hover:bg-white/5 rounded transition-colors whitespace-nowrap">{getTranslation(k)}</button>))}
+            <div className="flex-grow flex flex-col min-h-0 w-full overflow-hidden">
+              <div className={`grid ${auditGridCols} gap-2 px-4 py-2.5 bg-slate-900 dark:bg-[#020617] text-[7px] lg:text-[8px] font-black uppercase tracking-tight lg:tracking-[0.15em] text-slate-400 sticky top-0 z-10 items-center w-full`}>
+                {['status', 'order', 'debtType', 'item', 'category', 'subCategory', 'installments', 'estimatedValue', 'dueDate', 'paymentDate', 'PONTUALIDADE', 'hasOverride', 'observation'].map(k => (
+                  <button 
+                    key={k} 
+                    onClick={() => k !== 'PONTUALIDADE' && handleSort(k as any)} 
+                    className="py-1 px-0.5 hover:bg-white/5 rounded transition-colors text-center overflow-hidden text-ellipsis"
+                  >
+                    {getTranslation(k)}
+                  </button>
+                ))}
               </div>
-              <div className="flex-grow overflow-y-auto custom-scrollbar">
+              <div className="flex-grow overflow-y-auto custom-scrollbar w-full">
                 {currentMonthEntries.map((entry, idx) => {
                   const tagStyles = entry.subCategoryColor || getCategoryStyles(entry.category);
                   const st = getStatusConfig(entry.status, entry.id);
                   const termometro = getPontualidadeStatus(entry);
                   return (
-                    <div key={entry.id} className={`grid ${auditGridCols} gap-2 px-4 py-1.5 items-center border-b border-slate-100 dark:border-slate-800 transition-all ${st.rowClass}`}>
+                    <div key={entry.id} className={`grid ${auditGridCols} gap-2 px-4 py-1.5 items-center border-b border-slate-100 dark:border-slate-800 transition-all ${st.rowClass} w-full`}>
                       <div className="flex justify-center"><button onClick={() => togglePaymentStatus(entry)} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${st.bgColor} text-white shadow-sm`}>{st.icon}</button></div>
                       <div className="flex justify-center"><OrdemSelector value={entry.order || 5} onChange={(newOrder) => updateEntry(entry.id, { order: newOrder })} /></div>
-                      <div className="flex justify-center"><span className={`text-[8px] font-black px-1.5 py-0.5 rounded border ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>{getDebtTypeLabel(entry.debtType)}</span></div>
+                      <div className="flex justify-center"><span className={`text-[8px] font-black px-1.5 py-0.5 rounded border text-center w-full truncate ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>{getDebtTypeLabel(entry.debtType)}</span></div>
                       <div className="overflow-hidden"><span className={`text-[11px] font-black uppercase truncate tracking-tight ${st.textClass}`}>{entry.item}</span></div>
                       <div className="flex justify-center"><div className={`px-1.5 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest truncate ${getCategoryStyles(entry.category)} w-full text-center`}>{entry.category}</div></div>
                       <div className="flex justify-center"><div className={`px-1.5 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest truncate ${tagStyles} w-full text-center`}>{entry.subCategory || '—'}</div></div>
                       <div className="text-center"><span className="text-[10px] font-black text-slate-500 tabular-nums">{entry.installments}</span></div>
                       <div className="text-center"><span className={`text-[11px] font-black tabular-nums ${entry.hasOverride ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>{formatCurrency(entry.estimatedValue)}</span></div>
-                      <div className="text-center"><span className={`text-[10px] font-black px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 tabular-nums`}>{formatDate(entry.dueDate)}</span></div>
+                      <div className="text-center"><span className={`text-[9px] font-black px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 tabular-nums truncate`}>{formatDate(entry.dueDate)}</span></div>
                       <div className="flex justify-center relative"><CustomDatePicker value={entry.paymentDate} onChange={(date) => updateEntry(entry.id, { paymentDate: date, status: date ? 'Pago' : entry.status, paidValue: date ? entry.estimatedValue : 0 })} /></div>
-                      <div className="flex justify-center">{termometro && (<div className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-sm ${termometro.color}`}><termometro.icon className="w-3.5 h-3.5" /><span className="text-[8px] font-black uppercase">{termometro.label}</span></div>)}</div>
+                      <div className="flex justify-center">{termometro && (<div className={`flex items-center gap-1 px-1.5 py-1 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-sm ${termometro.color} w-full justify-center`}><termometro.icon className="w-3 h-3" /><span className="text-[7px] lg:text-[8px] font-black uppercase tracking-tighter truncate">{termometro.label}</span></div>)}</div>
                       <div className="flex justify-center"><button onClick={() => setPersonalizingEntry(entry)} className="p-1 rounded border bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-800/50 text-slate-400"><History className="w-3 h-3" /></button></div>
-                      <div className="flex justify-center"><input type="text" placeholder="..." value={entry.observation || ''} onChange={(e) => updateEntry(entry.id, { observation: e.target.value })} className="w-full h-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 px-1.5 rounded text-[10px] font-black text-slate-500 outline-none truncate" /></div>
+                      <div className="flex justify-center"><input type="text" placeholder="..." value={entry.observation || ''} onChange={(e) => updateEntry(entry.id, { observation: e.target.value })} className="w-full h-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 px-1.5 rounded text-[10px] font-black text-slate-500 outline-none truncate focus:border-sky-500/50" /></div>
                     </div>
                   );
                 })}
@@ -499,7 +508,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
             </div>
           </div>
 
-          {/* CARD CONSUMO DIÁRIO - TOTALMENTE REFORMULADO NO PADRÃO SUPERIOR */}
+          {/* CARD CONSUMO DIÁRIO - PROPORÇÃO 100%/5 (20% CADA COLUNA) */}
           <div className={`${isStrategyCollapsed ? 'flex-none' : 'flex-1'} flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden min-h-0 transition-all duration-500`}>
             <div className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/[0.02]">
               <div className="flex items-center gap-3">
@@ -522,35 +531,38 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
 
             {!isStrategyCollapsed && (
               <div className="flex-grow flex flex-col min-h-0 overflow-hidden">
-                {/* Cabeçalho da Tabela Diária */}
-                <div className={`grid ${dailyGridCols} gap-4 px-6 py-2.5 bg-slate-900 dark:bg-[#020617] text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 sticky top-0 z-10 items-center`}>
+                {/* Cabeçalho Proporcional 20% cada coluna */}
+                <div className="grid grid-cols-5 gap-3 px-6 py-2.5 bg-slate-900 dark:bg-[#020617] text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 sticky top-0 z-10 items-center">
                   <div className="text-center">STATUS</div>
                   <div className="text-center">TIPO</div>
-                  <div>ITEM</div>
-                  <div className="text-right">VALOR</div>
+                  <div className="text-center">ITEM</div>
+                  <div className="text-center">VALOR</div>
                   <div className="text-center">PAGAMENTO</div>
-                  <div className="w-[80px]"></div>
                 </div>
 
                 <div className="flex-grow overflow-y-auto custom-scrollbar">
-                  {/* Linha de Inserção (Integrada como se fosse a primeira linha da tabela) */}
-                  <div className={`grid ${dailyGridCols} gap-4 px-6 py-3 items-center border-b-2 border-slate-200 dark:border-slate-800 bg-sky-500/[0.03] dark:bg-sky-500/[0.01]`}>
+                  {/* Linha de Inserção - Proporção 1/5 em cada campo */}
+                  <div className="grid grid-cols-5 gap-3 px-6 py-3 items-center border-b-2 border-slate-200 dark:border-slate-800 bg-sky-500/[0.03] dark:bg-sky-500/[0.01]">
                     <div className="flex justify-center">
-                      <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[8px] font-black border border-emerald-500/20">PAGO</span>
+                      <div className="h-8 w-full bg-emerald-500/10 border border-emerald-500/20 rounded flex items-center justify-center">
+                        <span className="text-[9px] font-black text-emerald-600 uppercase">PAGO</span>
+                      </div>
                     </div>
                     <div className="flex justify-center">
-                      <span className="px-2 py-0.5 rounded bg-sky-500/10 text-sky-600 text-[8px] font-black border border-sky-500/20">VARIÁVEL</span>
+                      <div className="h-8 w-full bg-sky-500/10 border border-sky-500/20 rounded flex items-center justify-center">
+                        <span className="text-[9px] font-black text-sky-600 uppercase">VARIÁVEL</span>
+                      </div>
                     </div>
                     <div>
                       <div className="relative">
-                        <Receipt className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300" />
+                        <Receipt className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-300" />
                         <input 
                           type="text" 
-                          placeholder="Descrição..." 
+                          placeholder="Item..." 
                           value={dailyItemName}
                           onChange={(e) => setDailyItemName(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && handleAddDailyPurchase()}
-                          className="w-full h-[32px] pl-8 pr-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-[11px] font-black text-slate-900 dark:text-white outline-none focus:border-amber-500 transition-all uppercase" 
+                          className="w-full h-8 pl-6 pr-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded text-[10px] font-black text-slate-900 dark:text-white outline-none focus:border-amber-500 transition-all uppercase" 
                         />
                       </div>
                     </div>
@@ -561,31 +573,29 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                         value={dailyItemValueFormatted}
                         onChange={(e) => setDailyItemValueFormatted(formatCurrencyInput(e.target.value))}
                         onKeyDown={(e) => e.key === 'Enter' && handleAddDailyPurchase()}
-                        className="w-full h-[32px] px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-[11px] font-black text-amber-600 outline-none focus:border-amber-500 transition-all text-right tabular-nums" 
+                        className="w-full h-8 px-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded text-[10px] font-black text-amber-600 outline-none focus:border-amber-500 transition-all text-right tabular-nums" 
                       />
                     </div>
-                    <div className="flex justify-center">
+                    <div className="flex gap-1.5 items-center">
                       <input 
                         type="number" 
                         min="1" 
                         max="31" 
                         value={dailyItemDay}
                         onChange={(e) => setDailyItemDay(e.target.value)}
-                        className="w-[50px] h-[32px] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-[11px] font-black text-slate-500 text-center outline-none focus:border-amber-500 transition-all" 
+                        className="flex-grow h-8 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded text-[10px] font-black text-slate-500 text-center outline-none focus:border-amber-500 transition-all" 
                       />
-                    </div>
-                    <div className="flex justify-end">
                       <button 
                         onClick={handleAddDailyPurchase}
                         disabled={!dailyItemName || !dailyItemValueFormatted}
-                        className="h-[32px] px-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-md font-black text-[9px] uppercase tracking-widest shadow-md hover:scale-[1.05] active:scale-95 transition-all disabled:opacity-30"
+                        className="h-8 px-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded font-black text-[9px] uppercase tracking-widest shadow hover:scale-105 active:scale-95 transition-all disabled:opacity-30 shrink-0"
                       >
                         Lançar
                       </button>
                     </div>
                   </div>
 
-                  {/* Lista de Registros (Linhas da Tabela) */}
+                  {/* Lista de Registros - Proporção 1/5 */}
                   {(currentMonthStrategies || []).length === 0 ? (
                     <div className="py-20 flex flex-col items-center justify-center opacity-20">
                       <Tag className="w-12 h-12 text-slate-300 mb-3" />
@@ -593,28 +603,26 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                     </div>
                   ) : (
                     currentMonthStrategies.map((item) => (
-                      <div key={item.id} className={`grid ${dailyGridCols} gap-4 px-6 py-2 items-center border-b border-slate-100 dark:border-slate-800 transition-all hover:bg-slate-50 dark:hover:bg-white/[0.01] group animate-in slide-in-from-right-1`}>
+                      <div key={item.id} className="grid grid-cols-5 gap-3 px-6 py-2 items-center border-b border-slate-100 dark:border-slate-800 transition-all hover:bg-slate-50 dark:hover:bg-white/[0.01] group animate-in slide-in-from-right-1">
                         <div className="flex justify-center">
-                          <span className="px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-600 text-[7px] font-black border border-emerald-500/10">PAGO</span>
+                          <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[8px] font-black border border-emerald-500/10">PAGO</span>
                         </div>
                         <div className="flex justify-center">
-                          <span className="px-1.5 py-0.5 rounded-sm bg-sky-500/10 text-sky-600 text-[7px] font-black border border-sky-500/10 uppercase">Variável</span>
+                          <span className="px-2 py-0.5 rounded bg-sky-500/10 text-sky-600 text-[8px] font-black border border-sky-500/10 uppercase">VARIÁVEL</span>
                         </div>
                         <div className="min-w-0">
-                          <span className="text-[11px] font-black text-slate-900 dark:text-white uppercase truncate block tracking-tight">{item.title}</span>
+                          <span className="text-[10px] font-black text-slate-900 dark:text-white uppercase truncate block tracking-tight text-center">{item.title}</span>
                         </div>
-                        <div className="text-right">
-                          <span className="text-[11px] font-black text-amber-500 tabular-nums">{formatCurrency(parseFloat(item.content))}</span>
+                        <div className="text-center">
+                          <span className="text-[10px] font-black text-amber-500 tabular-nums">{formatCurrency(parseFloat(item.content))}</span>
                         </div>
-                        <div className="flex justify-center">
-                          <div className="w-7 h-7 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-[9px] text-slate-500 border border-slate-200 dark:border-slate-700 tabular-nums">
+                        <div className="flex items-center justify-center gap-2 relative">
+                          <div className="w-8 h-8 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-[10px] text-slate-500 border border-slate-200 dark:border-slate-700 tabular-nums">
                             {item.date}
                           </div>
-                        </div>
-                        <div className="flex justify-end">
                           <button 
                             onClick={() => removeDailyPurchase(item.id)}
-                            className="p-1.5 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                            className="absolute -right-2 p-1.5 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
