@@ -472,8 +472,8 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
     }
   };
 
-  // Grade atualizada para 13 colunas, refinada para ocupar 100% da largura
-  const auditGridCols = "grid-cols-[5fr_5fr_10fr_10fr_10fr_10fr_5fr_10fr_5fr_5fr_10fr_5fr_10fr]";
+  // Grade calibrada rigorosamente para as porcentagens solicitadas (Total 100%)
+  const auditGridCols = "grid-cols-[5%_5%_10%_10%_10%_10%_5%_10%_5%_5%_10%_5%_10%]";
 
   const getDebtTypeLabel = (type?: DebtType) => {
     if (!type) return 'FIXA';
@@ -673,7 +673,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                     case 'dueDate': label = 'VENCIMENTO'; break;
                     case 'paymentDate': label = 'PAGAMENTO'; break;
                     case 'PONTUALIDADE': label = 'PONTUALIDADE'; break;
-                    case 'hasOverride': label = 'PERSON.'; break;
+                    case 'hasOverride': label = 'AJUSTE'; break;
                     case 'observation': label = 'OBSERVAÇÃO'; break;
                     default: label = k.toUpperCase();
                   }
@@ -699,7 +699,6 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                       <div className="flex justify-center"><OrdemSelector value={entry.order || 5} onChange={(newOrder) => updateEntry(entry.id, { order: newOrder })} /></div>
                       <div className="flex justify-center"><span className={`text-[8px] font-black px-1.5 py-1 rounded-md border text-center w-full truncate ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>{getDebtTypeLabel(entry.debtType)}</span></div>
                       
-                      {/* ITEM COMO TAG */}
                       <div className="flex justify-center overflow-hidden">
                         <div className={`${baseTagStyle} truncate`}>
                           <span className={`text-[10px] font-black uppercase tracking-tight truncate ${st.textClass}`}>{entry.item}</span>
@@ -709,14 +708,12 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                       <div className="flex justify-center"><div className={`px-1.5 py-1 rounded-md border text-[9px] font-black uppercase tracking-widest truncate ${getCategoryStyles(entry.category)} w-full text-center`}>{entry.category}</div></div>
                       <div className="flex justify-center"><div className={`px-1.5 py-1 rounded-md border text-[9px] font-black uppercase tracking-widest truncate ${tagStyles} w-full text-center`}>{entry.subCategory || '—'}</div></div>
                       
-                      {/* PARCELA COMO TAG */}
                       <div className="flex justify-center">
                         <div className={baseTagStyle}>
                           <span className="text-[9px] font-black uppercase text-slate-500 tabular-nums">{entry.installments}</span>
                         </div>
                       </div>
 
-                      {/* VALOR COMO TAG */}
                       <div className="flex justify-center">
                         <div className={`${baseTagStyle} ${entry.hasOverride ? 'border-amber-500/30' : ''}`}>
                           <span className={`text-[10px] font-black uppercase tabular-nums ${entry.hasOverride ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
@@ -725,7 +722,6 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                         </div>
                       </div>
 
-                      {/* VENCIMENTO COMO TAG */}
                       <div className="flex justify-center">
                         <div className={`${baseTagStyle} bg-slate-900 dark:bg-slate-950`}>
                           <span className="text-[9px] font-black uppercase text-slate-400 tabular-nums">
@@ -1165,7 +1161,7 @@ const CustomDatePicker = ({ value, onChange, onToggle }: { value: string, onChan
     <div className="relative" ref={containerRef}>
       <button 
         onClick={handleOpen} 
-        className={`h-7 px-3 rounded border text-[10px] font-black flex items-center gap-2 transition-all hover:scale-105 active:scale-95 ${value ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400'}`}
+        className={`h-[28px] px-3 rounded-md border text-[10px] font-black flex items-center gap-2 transition-all hover:scale-105 active:scale-95 w-full justify-center ${value ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-sm' : 'bg-slate-50 dark:bg-slate-950/40 border-slate-100 dark:border-slate-800 text-slate-400'}`}
       >
         <CalendarDays className="w-3.5 h-3.5" /> 
         {value ? value.split('-').reverse().slice(0, 2).join('/') : '--/--'}
