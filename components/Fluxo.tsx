@@ -673,7 +673,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                     case 'dueDate': label = 'VENCIMENTO'; break;
                     case 'paymentDate': label = 'PAGAMENTO'; break;
                     case 'PONTUALIDADE': label = 'PONTUALIDADE'; break;
-                    case 'hasOverride': label = 'PERSONALIZAÇÃO'; break;
+                    case 'hasOverride': label = 'AÇÃO'; break;
                     case 'observation': label = 'OBSERVAÇÃO'; break;
                     default: label = k.toUpperCase();
                   }
@@ -999,9 +999,9 @@ const ModalDatePicker = ({ value, onChange }: { value: string, onChange: (date: 
       {isOpen && (
         <div className="absolute top-full left-0 w-full mt-2 z-[9999] bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-5 animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
-            <button type="button" onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400"><ChevronLeft className="w-4 h-4" /></button>
+            <button type="button" onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"><ChevronLeft className="w-4 h-4" /></button>
             <span className="text-[11px] font-black uppercase text-slate-900 dark:text-white tracking-[0.2em]">{months[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
-            <button type="button" onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400"><ChevronRight className="w-4 h-4" /></button>
+            <button type="button" onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"><ChevronRight className="w-4 h-4" /></button>
           </div>
           
           <div className="grid grid-cols-7 gap-1 mb-2">
