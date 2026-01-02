@@ -173,6 +173,11 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
     return filtered;
   }, [entries, activeYear, activeMonth, activeTab, sortConfig, allProfiles, filterSearch, filterCategories, filterSubCategories, filterStatus, filterPunctuality]);
 
+  // SEGREGAÇÃO DOS DADOS PARA OS CARDS
+  const operationalEntries = useMemo(() => {
+    return currentMonthEntries.filter(e => e.debtType !== 'GASTOS VARIÁVEIS');
+  }, [currentMonthEntries]);
+
   const variableExpensesEntries = useMemo(() => {
     return currentMonthEntries.filter(e => e.debtType === 'GASTOS VARIÁVEIS');
   }, [currentMonthEntries]);
@@ -713,13 +718,12 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                 })}
               </div>
               <div className="flex-grow overflow-y-auto custom-scrollbar overflow-x-visible">
-                {currentMonthEntries.length === 0 ? (
+                {operationalEntries.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-40">
                     <Search className="w-10 h-10 text-slate-400" />
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Nenhum registro encontrado</p>
-                    {hasActiveFilters && <button onClick={clearFilters} className="text-[9px] font-black uppercase text-sky-500 hover:underline">Limpar filtros ativos</button>}
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Nenhum registro operacional nesta visão</p>
                   </div>
-                ) : currentMonthEntries.map((entry) => {
+                ) : operationalEntries.map((entry) => {
                   const tagStyles = entry.subCategoryColor || getCategoryStyles(entry.category);
                   const st = getStatusConfig(entry.status, entry.id);
                   const termometro = getPontualidadeStatus(entry);
@@ -729,7 +733,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                     <div key={entry.id} className={`grid ${auditGridCols} gap-2 px-4 py-1.5 items-center border-b border-slate-100 dark:border-slate-800 transition-all ${st.rowClass} relative`}>
                       <div className="flex justify-center"><button onClick={() => togglePaymentStatus(entry)} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${st.bgColor} text-white shadow-sm`}>{st.icon}</button></div>
                       <div className="flex justify-center"><OrdemSelector value={entry.order || 5} onChange={(newOrder) => updateEntry(entry.id, { order: newOrder })} /></div>
-                      <div className="flex justify-center"><span className={`text-[9px] font-black px-1.5 py-1 rounded-md border text-center w-full truncate dark:bg-[#0A1022] dark:border-slate-800 ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : entry.debtType === 'GASTOS VARIÁVEIS' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>{getDebtTypeLabel(entry.debtType)}</span></div>
+                      <div className="flex justify-center"><span className={`text-[9px] font-black px-1.5 py-1 rounded-md border text-center w-full truncate dark:bg-[#0A1022] dark:border-slate-800 ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>{getDebtTypeLabel(entry.debtType)}</span></div>
                       
                       <div className="flex justify-center overflow-hidden">
                         <div className={`${baseTagStyle} max-w-[178px] truncate`}>
