@@ -491,15 +491,41 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                       <div className="flex justify-center"><button onClick={() => togglePaymentStatus(entry)} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${st.bgColor} text-white shadow-sm`}>{st.icon}</button></div>
                       <div className="flex justify-center"><OrdemSelector value={entry.order || 5} onChange={(newOrder) => updateEntry(entry.id, { order: newOrder })} /></div>
                       <div className="flex justify-center"><span className={`text-[8px] font-black px-1.5 py-0.5 rounded border text-center w-full truncate ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>{getDebtTypeLabel(entry.debtType)}</span></div>
-                      <div className="overflow-hidden"><span className={`text-[11px] font-black uppercase truncate tracking-tight ${st.textClass}`}>{entry.item}</span></div>
+                      
+                      {/* ITEM COMO TAG */}
+                      <div className="flex justify-center overflow-hidden">
+                        <div className={`px-1.5 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest truncate bg-slate-50 dark:bg-slate-950/40 border-slate-100 dark:border-slate-800 w-full text-center ${st.textClass}`}>
+                          {entry.item}
+                        </div>
+                      </div>
+                      
                       <div className="flex justify-center"><div className={`px-1.5 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest truncate ${getCategoryStyles(entry.category)} w-full text-center`}>{entry.category}</div></div>
                       <div className="flex justify-center"><div className={`px-1.5 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest truncate ${tagStyles} w-full text-center`}>{entry.subCategory || '—'}</div></div>
-                      <div className="text-center"><span className="text-[10px] font-black text-slate-500 tabular-nums">{entry.installments}</span></div>
-                      <div className="text-center"><span className={`text-[11px] font-black tabular-nums ${entry.hasOverride ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>{formatCurrency(entry.estimatedValue)}</span></div>
-                      <div className="text-center"><span className={`text-[9px] font-black px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 tabular-nums truncate`}>{formatDate(entry.dueDate)}</span></div>
+                      
+                      {/* PARCELA COMO TAG */}
+                      <div className="flex justify-center">
+                        <div className="px-1.5 py-0.5 rounded border text-[9px] font-black uppercase bg-slate-50 dark:bg-slate-950/40 border-slate-100 dark:border-slate-800 text-slate-500 tabular-nums w-full text-center">
+                          {entry.installments}
+                        </div>
+                      </div>
+
+                      {/* VALOR COMO TAG */}
+                      <div className="flex justify-center">
+                        <div className={`px-1.5 py-0.5 rounded border text-[9px] font-black uppercase tabular-nums bg-slate-50 dark:bg-slate-950/40 border-slate-100 dark:border-slate-800 w-full text-center ${entry.hasOverride ? 'text-amber-500 border-amber-500/30' : 'text-slate-900 dark:text-white'}`}>
+                          {formatCurrency(entry.estimatedValue)}
+                        </div>
+                      </div>
+
+                      {/* VENCIMENTO COMO TAG */}
+                      <div className="flex justify-center">
+                        <div className="px-1.5 py-0.5 rounded border text-[9px] font-black uppercase bg-slate-900 dark:bg-slate-950 border-slate-800 text-slate-400 tabular-nums w-full text-center">
+                          {formatDate(entry.dueDate)}
+                        </div>
+                      </div>
+
                       <div className="flex justify-center relative"><CustomDatePicker value={entry.paymentDate} onChange={(date) => updateEntry(entry.id, { paymentDate: date, status: date ? 'Pago' : entry.status, paidValue: date ? entry.estimatedValue : 0 })} /></div>
-                      <div className="flex justify-center">{termometro && (<div className={`flex items-center gap-1 px-1.5 py-1 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-sm ${termometro.color} w-full justify-center`}><termometro.icon className="w-3 h-3" /><span className="text-[7px] lg:text-[8px] font-black uppercase tracking-tighter truncate">{termometro.label}</span></div>)}</div>
-                      <div className="flex justify-center"><button onClick={() => setPersonalizingEntry(entry)} className="p-1 rounded border bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-800/50 text-slate-400"><History className="w-3 h-3" /></button></div>
+                      <div className="flex justify-center">{termometro && (<div className={`flex items-center gap-1 px-1.5 py-1 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-sm ${termometro.color} w-full justify-center`}><termometro.icon className="w-3" /><span className="text-[7px] lg:text-[8px] font-black uppercase tracking-tighter truncate">{termometro.label}</span></div>)}</div>
+                      <div className="flex justify-center"><button onClick={() => setPersonalizingEntry(entry)} className="p-1 rounded border bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-800/50 text-slate-400"><History className="w-3" /></button></div>
                       <div className="flex justify-center"><input type="text" placeholder="..." value={entry.observation || ''} onChange={(e) => updateEntry(entry.id, { observation: e.target.value })} className="w-full h-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 px-1.5 rounded text-[10px] font-black text-slate-500 outline-none truncate focus:border-sky-500/50" /></div>
                     </div>
                   );
