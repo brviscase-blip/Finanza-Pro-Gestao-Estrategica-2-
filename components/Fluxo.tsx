@@ -146,7 +146,6 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
       const matchesStatus = filterStatus.size === 0 || filterStatus.has(e.status);
       
       const termometro = getPontualidadeStatus(e);
-      // Fix: Explicitly type 'p' as string to resolve 'unknown' type error in termometro.label.includes(p)
       const matchesPunctuality = filterPunctuality.size === 0 || (termometro && Array.from(filterPunctuality).some((p: string) => termometro.label.includes(p)));
 
       return matchesSearch && matchesCategory && matchesSubCategory && matchesStatus && matchesPunctuality;
@@ -473,14 +472,14 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
     }
   };
 
-  // Grade atualizada para 13 colunas, inserindo TIPO DIVIDA entre CATEGORIA e ITEM
-  const auditGridCols = "grid-cols-[0.4fr_0.4fr_0.7fr_1.1fr_0.8fr_0.7fr_0.5fr_0.8fr_0.8fr_0.8fr_0.9fr_0.6fr_1.0fr]";
+  // Grade atualizada para 13 colunas, refinada para ocupar 100% da largura
+  const auditGridCols = "grid-cols-[5fr_5fr_10fr_10fr_10fr_10fr_5fr_10fr_5fr_5fr_10fr_5fr_10fr]";
 
   const getDebtTypeLabel = (type?: DebtType) => {
     if (!type) return 'FIXA';
     if (type === 'DESPESAS FIXAS') return 'FIXA';
     if (type === 'GASTOS VARIÁVEIS') return 'VARIÁVEL';
-    return type; // 'PASSIVOS' retorna como 'PASSIVOS'
+    return type; // 'PASSIVOS'
   };
 
   return (
@@ -665,11 +664,11 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                   switch(k) {
                     case 'status': label = 'STATUS'; break;
                     case 'order': label = 'ORDEM'; break;
-                    case 'debtType': label = 'TIPO DIVIDA'; break;
+                    case 'debtType': label = 'TIPO'; break;
                     case 'item': label = 'ITEM'; break;
                     case 'category': label = 'CATEGORIA'; break;
-                    case 'subCategory': label = 'SUB-CATEGORIA'; break;
-                    case 'installments': label = 'PARCELAS'; break;
+                    case 'subCategory': label = 'TAG'; break;
+                    case 'installments': label = 'PARCELA'; break;
                     case 'estimatedValue': label = 'VALOR'; break;
                     case 'dueDate': label = 'VENCIMENTO'; break;
                     case 'paymentDate': label = 'PAGAMENTO'; break;
@@ -678,7 +677,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                     case 'observation': label = 'OBSERVAÇÃO'; break;
                     default: label = k.toUpperCase();
                   }
-                  return (<button key={k} onClick={() => k !== 'PONTUALIDADE' && handleSort(k as SortKey)} className={`group flex items-center gap-1.5 py-1 px-1 hover:bg-white/5 rounded transition-colors ${k === 'item' ? 'justify-start' : 'justify-center'} whitespace-nowrap`}>{label} {k !== 'PONTUALIDADE' && renderSortIcon(k as SortKey)}</button>);
+                  return (<button key={k} onClick={() => k !== 'PONTUALIDADE' && handleSort(k as SortKey)} className={`group flex items-center gap-1.5 py-1 px-1 hover:bg-white/5 rounded transition-colors justify-center whitespace-nowrap`}>{label} {k !== 'PONTUALIDADE' && renderSortIcon(k as SortKey)}</button>);
                 })}
               </div>
               <div className="flex-grow overflow-y-auto custom-scrollbar overflow-x-visible">
@@ -691,52 +690,58 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                 ) : currentMonthEntries.map((entry, idx) => {
                   const tagStyles = entry.subCategoryColor || getCategoryStyles(entry.category);
                   const st = getStatusConfig(entry.status, entry.id);
-                  const node = (strategyBlocks || []).find(b => b.entryId === entry.id);
-                  const isLocked = node && node.status !== 'completed';
                   const termometro = getPontualidadeStatus(entry);
-                  const isMigrated = (entry.competenceMonth !== undefined && entry.competenceMonth !== entry.month) || 
-                                    (entry.competenceYear !== undefined && entry.competenceYear !== entry.year);
+                  const baseTagStyle = "flex items-center justify-center px-1.5 py-1 rounded-md bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 shadow-sm w-full h-[28px]";
 
                   return (
-                    <div key={entry.id} className={`grid ${auditGridCols} gap-2 px-4 py-1.5 items-center border-b border-slate-100 dark:border-slate-800 transition-all ${st.rowClass} ${entry.status === 'Pendente' && idx % 2 === 0 ? 'bg-white dark:bg-[#020617]/40' : entry.status === 'Pendente' ? 'bg-slate-50/30 dark:bg-slate-900/40' : ''} relative`}>
-                      <div className="flex justify-center"><button onClick={() => togglePaymentStatus(entry)} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${st.bgColor} ${isLocked ? 'cursor-not-allowed opacity-50' : 'text-white shadow-sm'}`}>{st.icon}</button></div>
+                    <div key={entry.id} className={`grid ${auditGridCols} gap-2 px-4 py-1.5 items-center border-b border-slate-100 dark:border-slate-800 transition-all ${st.rowClass} relative`}>
+                      <div className="flex justify-center"><button onClick={() => togglePaymentStatus(entry)} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${st.bgColor} text-white shadow-sm`}>{st.icon}</button></div>
                       <div className="flex justify-center"><OrdemSelector value={entry.order || 5} onChange={(newOrder) => updateEntry(entry.id, { order: newOrder })} /></div>
+                      <div className="flex justify-center"><span className={`text-[8px] font-black px-1.5 py-1 rounded-md border text-center w-full truncate ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>{getDebtTypeLabel(entry.debtType)}</span></div>
+                      
+                      {/* ITEM COMO TAG */}
+                      <div className="flex justify-center overflow-hidden">
+                        <div className={`${baseTagStyle} truncate`}>
+                          <span className={`text-[10px] font-black uppercase tracking-tight truncate ${st.textClass}`}>{entry.item}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-center"><div className={`px-1.5 py-1 rounded-md border text-[9px] font-black uppercase tracking-widest truncate ${getCategoryStyles(entry.category)} w-full text-center`}>{entry.category}</div></div>
+                      <div className="flex justify-center"><div className={`px-1.5 py-1 rounded-md border text-[9px] font-black uppercase tracking-widest truncate ${tagStyles} w-full text-center`}>{entry.subCategory || '—'}</div></div>
+                      
+                      {/* PARCELA COMO TAG */}
                       <div className="flex justify-center">
-                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border text-center truncate ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : entry.debtType === 'GASTOS VARIÁVEIS' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>
-                          {getDebtTypeLabel(entry.debtType)}
-                        </span>
-                      </div>
-                      <div className="overflow-hidden">
-                        <div className="flex items-center gap-1">
-                          <FileText className="w-3 h-3 text-slate-300" />
-                          <div className="flex flex-col">
-                            <span className={`text-[11px] font-black uppercase truncate tracking-tight ${st.textClass}`}>{entry.item}</span>
-                            {isMigrated && <span className="text-[7px] font-bold text-rose-500 uppercase leading-none">Pendente {entry.competenceMonth}/{entry.competenceYear}</span>}
-                          </div>
+                        <div className={baseTagStyle}>
+                          <span className="text-[9px] font-black uppercase text-slate-500 tabular-nums">{entry.installments}</span>
                         </div>
                       </div>
-                      <div className="flex justify-center overflow-hidden">
-                        <div className={`px-1.5 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest truncate ${getCategoryStyles(entry.category)} w-full text-center flex flex-col leading-tight min-h-[24px] justify-center`}>
-                          <span>{entry.category}</span>
+
+                      {/* VALOR COMO TAG */}
+                      <div className="flex justify-center">
+                        <div className={`${baseTagStyle} ${entry.hasOverride ? 'border-amber-500/30' : ''}`}>
+                          <span className={`text-[10px] font-black uppercase tabular-nums ${entry.hasOverride ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
+                            {formatCurrency(entry.estimatedValue)}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex justify-center overflow-hidden">
-                         <div className={`px-1.5 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest truncate ${entry.subCategory && entry.subCategory !== '-' ? tagStyles : 'bg-slate-100/50 dark:bg-slate-800/50 border-transparent text-slate-400 opacity-40'} w-full text-center flex flex-col leading-tight min-h-[24px] justify-center`}>
-                            <span>{entry.subCategory && entry.subCategory !== '-' ? entry.subCategory : '—'}</span>
-                         </div>
+
+                      {/* VENCIMENTO COMO TAG */}
+                      <div className="flex justify-center">
+                        <div className={`${baseTagStyle} bg-slate-900 dark:bg-slate-950`}>
+                          <span className="text-[9px] font-black uppercase text-slate-400 tabular-nums">
+                            {formatDate(entry.dueDate)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-center"><span className="text-[10px] font-black text-slate-500 tabular-nums">{entry.installments !== '-' ? entry.installments : '--'}</span></div>
-                      <div className="text-center relative flex items-center justify-center gap-1"><span className={`text-[11px] font-black tabular-nums ${entry.hasOverride ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>{formatCurrency(entry.estimatedValue)}</span></div>
-                      <div className="text-center"><span className={`text-[10px] font-black px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 tabular-nums`}>{formatDate(entry.dueDate)}</span></div>
+
                       <div className="flex justify-center relative"><CustomDatePicker value={entry.paymentDate} onChange={(date) => updateEntry(entry.id, { paymentDate: date, status: date ? 'Pago' : entry.status, paidValue: date ? entry.estimatedValue : 0 })} onToggle={(isOpen) => setOpenDatePickerId(isOpen ? entry.id : null)} /></div>
-                      <div className="flex justify-center">{termometro && (<div className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-sm ${termometro.color}`}><termometro.icon className="w-3.5 h-3.5" /><span className="text-[8px] font-black uppercase whitespace-nowrap">{termometro.label}</span></div>)}</div>
+                      <div className="flex justify-center">{termometro && (<div className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-sm ${termometro.color} w-full justify-center`}><termometro.icon className="w-3.5 h-3.5" /><span className="text-[8px] font-black uppercase whitespace-nowrap">{termometro.label}</span></div>)}</div>
                       <div className="flex justify-center gap-1">
-                        <button disabled={isLocked} onClick={() => !isLocked && setPersonalizingEntry(entry)} className={`p-1 rounded border transition-all ${entry.hasOverride ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-800/50 text-slate-400'}`} title="Personalizar"><History className="w-3 h-3" /></button>
-                        {isMigrated && (
-                          <button onClick={() => handleReturnToOrigin(entry)} className="p-1 rounded border bg-rose-500/10 border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white transition-all" title="Devolver ao Mês de Origem"><Undo2 className="w-3 h-3" /></button>
-                        )}
+                        <button onClick={() => setPersonalizingEntry(entry)} className={`p-1 rounded border transition-all ${entry.hasOverride ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-800/50 text-slate-400'}`} title="Personalizar"><History className="w-3 h-3" /></button>
                       </div>
-                      <div className="flex justify-center h-full items-center"><input type="text" placeholder="..." value={entry.observation || ''} onChange={(e) => updateEntry(entry.id, { observation: e.target.value })} className="w-full h-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 px-1.5 rounded text-[10px] font-black text-slate-500 outline-none truncate" /></div>
+                      <div className="flex justify-center h-full items-center">
+                        <input type="text" placeholder="..." value={entry.observation || ''} onChange={(e) => updateEntry(entry.id, { observation: e.target.value })} className="w-full h-[28px] bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 px-1.5 rounded-md text-[10px] font-black text-slate-500 outline-none truncate shadow-sm focus:border-sky-500/50" />
+                      </div>
                     </div>
                   );
                 })}
