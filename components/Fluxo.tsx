@@ -15,6 +15,24 @@ const formatDate = (dateStr: string) => {
 
 const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
+// Função para formatar entrada de texto como moeda BRL em tempo real
+const formatCurrencyInput = (value: string) => {
+  const digits = value.replace(/\D/g, '');
+  const numberValue = parseInt(digits) / 100;
+  if (isNaN(numberValue)) return '';
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2
+  }).format(numberValue);
+};
+
+// Função para extrair o valor numérico puro da string formatada
+const parseCurrencyInput = (formattedValue: string): number => {
+  const digits = formattedValue.replace(/\D/g, '');
+  return parseInt(digits) / 100 || 0;
+};
+
 interface FluxoProps {
   entries: MonthlyEntry[];
   setEntries: (newEntriesAction: any) => void;
@@ -50,7 +68,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
 
   // Estados para o novo item diário
   const [dailyItemName, setDailyItemName] = useState('');
-  const [dailyItemValue, setDailyItemValue] = useState('');
+  const [dailyItemValueFormatted, setDailyItemValueFormatted] = useState('');
   const [dailyItemDay, setDailyItemDay] = useState(new Date().getDate().toString());
 
   const [showFilters, setShowFilters] = useState(false);
@@ -112,6 +130,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
       if (today > dueDate) return { label: 'ATRASADO', color: 'text-rose-500', icon: AlertTriangle };
       const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       if (diffDays <= 7 && diffDays >= 0) return { label: `PRAZO (${diffDays}d)`, color: 'text-amber-500', icon: Clock };
+      // Fix: CalendarIcon not found, use Calendar which is already imported from lucide-react
       return { label: 'NO PRAZO', color: 'text-slate-400', icon: Calendar };
     }
   };
@@ -294,13 +313,16 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
   };
 
   const handleAddDailyPurchase = () => {
-    if (!dailyItemName || !dailyItemValue) return;
+    if (!dailyItemName || !dailyItemValueFormatted) return;
+    const numericValue = parseCurrencyInput(dailyItemValueFormatted);
+    if (numericValue <= 0) return;
+
     const newBlock: StrategyBlock = {
       id: crypto.randomUUID(),
       entryId: '',
       itemTitle: 'DIÁRIO',
       title: dailyItemName.toUpperCase(),
-      content: dailyItemValue, // Usamos content para o valor numérico
+      content: numericValue.toString(), // Usamos content para o valor numérico
       mode: 'text',
       status: 'completed',
       date: dailyItemDay.padStart(2, '0'), // Usamos date para o dia do mês
@@ -310,7 +332,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
     };
     setStrategyBlocks((prev: StrategyBlock[]) => [...(prev || []), newBlock]);
     setDailyItemName('');
-    setDailyItemValue('');
+    setDailyItemValueFormatted('');
   };
 
   const removeDailyPurchase = (id: string) => setStrategyBlocks((prev: StrategyBlock[]) => prev.filter(s => s.id !== id));
@@ -325,9 +347,6 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
     }
   };
 
-  /**
-   * Fix for missing getDebtTypeLabel function
-   */
   const getDebtTypeLabel = (type?: DebtType) => {
     if (!type) return 'FIXA';
     if (type === 'DESPESAS FIXAS') return 'FIXA';
@@ -339,6 +358,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
     switch(status) {
       case 'Pago': return { icon: <ShieldCheck className="w-4 h-4" />, bgColor: 'bg-emerald-500', rowClass: 'bg-emerald-500/[0.05] dark:bg-emerald-500/[0.03]', textClass: 'text-emerald-700 dark:text-emerald-400 line-through opacity-60' };
       case 'Não Pago': return { icon: <AlertCircle className="w-4 h-4" />, bgColor: 'bg-rose-500', rowClass: 'bg-rose-500/[0.05] dark:bg-rose-500/[0.03]', textClass: 'text-rose-600 dark:text-rose-400 italic' };
+      // Fix: CalendarIcon not found, use Calendar which is already imported from lucide-react
       case 'Planejado': return { icon: <Calendar className="w-4 h-4" />, bgColor: 'bg-sky-500', rowClass: 'bg-sky-500/[0.03] dark:bg-sky-500/[0.02]', textClass: 'text-slate-900 dark:text-white font-black' };
       default: return { icon: <Clock className="w-4 h-4" />, bgColor: 'bg-white dark:bg-slate-950', rowClass: '', textClass: 'text-slate-900 dark:text-white' };
     }
@@ -501,14 +521,26 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
             {!isStrategyCollapsed && (
               <div className="flex flex-col h-full bg-slate-50/20 dark:bg-slate-950/20 p-6 overflow-hidden">
                 {/* Formulário de Adição Rápida */}
-                <div className="flex items-end gap-3 mb-6 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
-                  <div className="flex-grow space-y-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descrição do Item</label>
+                <div className="grid grid-cols-[0.7fr_0.8fr_1fr_0.8fr_0.6fr_auto] items-end gap-3 mb-6 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Status</label>
+                    <div className="h-11 px-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center">
+                       <span className="text-[10px] font-black text-emerald-600 uppercase">PAGO</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo</label>
+                    <div className="h-11 px-4 bg-sky-500/10 border border-sky-500/20 rounded-xl flex items-center justify-center">
+                       <span className="text-[10px] font-black text-sky-600 uppercase">VARIÁVEL</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Item</label>
                     <div className="relative">
                       <Receipt className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                       <input 
                         type="text" 
-                        placeholder="Ex: Pão, Remédio, Café..." 
+                        placeholder="Ex: Pão..." 
                         value={dailyItemName}
                         onChange={(e) => setDailyItemName(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleAddDailyPurchase()}
@@ -516,22 +548,21 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                       />
                     </div>
                   </div>
-                  <div className="w-[120px] space-y-2">
+                  <div className="space-y-2">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Valor</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">R$</span>
                       <input 
-                        type="number" 
-                        placeholder="0,00" 
-                        value={dailyItemValue}
-                        onChange={(e) => setDailyItemValue(e.target.value)}
+                        type="text" 
+                        placeholder="R$ 0,00" 
+                        value={dailyItemValueFormatted}
+                        onChange={(e) => setDailyItemValueFormatted(formatCurrencyInput(e.target.value))}
                         onKeyDown={(e) => e.key === 'Enter' && handleAddDailyPurchase()}
-                        className="w-full h-11 pl-9 pr-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-black text-amber-600 outline-none focus:border-amber-500 transition-all text-right" 
+                        className="w-full h-11 px-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-black text-amber-600 outline-none focus:border-amber-500 transition-all text-right tabular-nums" 
                       />
                     </div>
                   </div>
-                  <div className="w-[80px] space-y-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center">Dia</label>
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center">Pagamento</label>
                     <input 
                       type="number" 
                       min="1" 
@@ -543,7 +574,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                   </div>
                   <button 
                     onClick={handleAddDailyPurchase}
-                    disabled={!dailyItemName || !dailyItemValue}
+                    disabled={!dailyItemName || !dailyItemValueFormatted}
                     className="h-11 px-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:scale-[1.05] active:scale-95 transition-all disabled:opacity-30 disabled:grayscale"
                   >
                     Lançar
@@ -559,23 +590,32 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                     </div>
                   ) : (
                     currentMonthStrategies.map((item) => (
-                      <div key={item.id} className="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all group animate-in slide-in-from-right-2">
-                        <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center font-black text-xs text-slate-400 border border-slate-100 dark:border-slate-700 shrink-0">
-                          {item.date}
+                      <div key={item.id} className="grid grid-cols-[0.7fr_0.8fr_1fr_0.8fr_0.6fr_auto] items-center gap-4 p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all group animate-in slide-in-from-right-2">
+                        <div className="flex justify-center">
+                          <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[8px] font-black border border-emerald-500/20">PAGO</span>
                         </div>
-                        <div className="flex-grow">
-                          <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight">{item.title}</span>
-                          <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Microgasto Eventual</span>
+                        <div className="flex justify-center">
+                          <span className="px-2 py-0.5 rounded bg-sky-500/10 text-sky-600 text-[8px] font-black border border-sky-500/20">VARIÁVEL</span>
                         </div>
-                        <div className="text-right px-4">
+                        <div className="min-w-0">
+                          <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight truncate block">{item.title}</span>
+                        </div>
+                        <div className="text-right">
                           <span className="text-sm font-black text-amber-500 tabular-nums">{formatCurrency(parseFloat(item.content))}</span>
                         </div>
-                        <button 
-                          onClick={() => removeDailyPurchase(item.id)}
-                          className="p-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex justify-center">
+                          <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center font-black text-[10px] text-slate-400 border border-slate-100 dark:border-slate-700">
+                            {item.date}
+                          </div>
+                        </div>
+                        <div className="flex justify-end">
+                          <button 
+                            onClick={() => removeDailyPurchase(item.id)}
+                            className="p-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}
