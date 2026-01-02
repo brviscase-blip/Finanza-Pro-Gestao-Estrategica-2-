@@ -817,11 +817,11 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
             {!isStrategyCollapsed && (
               <div className="flex-grow flex flex-col min-h-0">
                 <div className={`grid ${auditGridCols} gap-2 px-4 py-2.5 bg-slate-900 dark:bg-[#0A1022] text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 sticky top-0 z-10 items-center select-none`}>
-                  {['status', 'order', 'debtType', 'item', 'category', 'subCategory', 'installments', 'estimatedValue', 'dueDate', 'paymentDate', 'PONTUALIDADE', 'hasOverride', 'observation'].map(k => {
+                  {['status', '#', 'debtType', 'item', 'category', 'subCategory', 'installments', 'estimatedValue', 'dueDate', 'paymentDate', 'PONTUALIDADE', 'hasOverride', 'observation'].map(k => {
                     let label = '';
                     switch(k) {
                       case 'status': label = 'STATUS'; break;
-                      case 'order': label = 'ORDEM'; break;
+                      case '#': label = '#'; break;
                       case 'debtType': label = 'TIPO'; break;
                       case 'item': label = 'ITEM'; break;
                       case 'category': label = 'CATEGORIA'; break;
@@ -835,7 +835,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                       case 'observation': label = 'OBSERVAÇÃO'; break;
                       default: label = k.toUpperCase();
                     }
-                    return (<button key={k} onClick={() => k !== 'PONTUALIDADE' && handleSort(k as SortKey)} className={`group flex items-center gap-1.5 py-1 px-1 hover:bg-white/5 rounded transition-colors justify-center whitespace-nowrap`}>{label} {k !== 'PONTUALIDADE' && renderSortIcon(k as SortKey)}</button>);
+                    return (<button key={k} onClick={() => !['PONTUALIDADE', '#'].includes(k) && handleSort(k as SortKey)} className={`group flex items-center gap-1.5 py-1 px-1 hover:bg-white/5 rounded transition-colors justify-center whitespace-nowrap`}>{label} {!['PONTUALIDADE', '#'].includes(k) && renderSortIcon(k as SortKey)}</button>);
                   })}
                 </div>
                 <div className="flex-grow overflow-y-auto custom-scrollbar overflow-x-visible">
@@ -844,7 +844,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                       <TrendingUp className="w-10 h-10 text-slate-400" />
                       <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Nenhum gasto variável identificado</p>
                     </div>
-                  ) : variableExpensesEntries.map((entry) => {
+                  ) : variableExpensesEntries.map((entry, index) => {
                     const tagStyles = entry.subCategoryColor || getCategoryStyles(entry.category);
                     const st = getStatusConfig(entry.status, entry.id);
                     const termometro = getPontualidadeStatus(entry);
@@ -861,7 +861,12 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                             {st.icon}
                           </button>
                         </div>
-                        <div className="flex justify-center"><OrdemSelector value={entry.order || 5} onChange={(newOrder) => updateEntry(entry.id, { order: newOrder })} /></div>
+                        {/* COLUNA ORDEM TRANSFORMADA EM CONTADOR (#) COM ESTILO PADRÃO ORDEM 5 */}
+                        <div className="flex justify-center">
+                          <div className="w-10 h-[24px] rounded-lg border flex items-center justify-center transition-all shadow-sm bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20 dark:border-slate-800">
+                            <span className="text-[9px] font-black">{index + 1}</span>
+                          </div>
+                        </div>
                         <div className="flex justify-center"><span className={`text-[9px] font-black px-1.5 py-1 rounded-md border text-center w-full truncate dark:bg-[#0A1022] dark:border-slate-800 bg-amber-500/10 text-amber-600 border-amber-500/20`}>{getDebtTypeLabel(entry.debtType)}</span></div>
                         
                         <div className="flex justify-center overflow-hidden">
@@ -1020,7 +1025,7 @@ const ObservationModal = ({ entry, onClose, onSave }: { entry: MonthlyEntry, onC
   const [text, setText] = useState(entry.observation || '');
   return (
     <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-[#020617] w-full max-w-xl rounded-3xl border-2 border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+      <div className="bg-white dark:bg-[#020617] w-full max-w-xl rounded-3xl border-2 border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col h-[90vh]">
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#020617]">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-sky-600 text-white rounded-2xl shadow-lg"><FileText className="w-5 h-5" /></div>
@@ -1323,7 +1328,7 @@ const OrdemSelector = ({ value, onChange }: { value: number, onChange: (v: numbe
     switch (v) {
       case 1: return 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 dark:border-rose-500/10';
       case 2: return 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20 dark:border-orange-500/10';
-      case 3: return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 dark:border-amber-500/10';
+      case 3: return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-orange-500/20 dark:border-orange-500/10';
       case 4: return 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20 dark:border-sky-500/10';
       case 5: return 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20 dark:border-slate-800';
       default: return 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20 dark:border-slate-800';
