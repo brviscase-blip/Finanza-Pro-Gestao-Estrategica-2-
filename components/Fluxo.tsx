@@ -59,6 +59,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
   const [activeTab, setActiveTab] = useState<'mes' | 'atrasadas' | 'geral'>('geral');
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
   const [personalizingEntry, setPersonalizingEntry] = useState<MonthlyEntry | null>(null);
+  const [editingObservationId, setEditingObservationId] = useState<string | null>(null);
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [openDatePickerId, setOpenDatePickerId] = useState<string | null>(null);
@@ -85,13 +86,14 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
     const handleGlobalEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (personalizingEntry) setPersonalizingEntry(null);
+        else if (editingObservationId) setEditingObservationId(null);
         else if (isSelectionModalOpen) setIsSelectionModalOpen(false);
         else if (editingNodeId) setEditingNodeId(null);
       }
     };
     window.addEventListener('keydown', handleGlobalEsc);
     return () => window.removeEventListener('keydown', handleGlobalEsc);
-  }, [personalizingEntry, isSelectionModalOpen, editingNodeId]);
+  }, [personalizingEntry, isSelectionModalOpen, editingNodeId, editingObservationId]);
 
   const handleSort = (key: SortKey) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -487,6 +489,13 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
       {isSelectionModalOpen && <SelectionModal entries={currentMonthEntries.filter(e => e.status === 'Planejado' && !strategyBlocks.some(b => b.entryId === e.id))} onClose={() => setIsSelectionModalOpen(false)} onSelect={addStrategyBlock} />}
       {editingNodeId && <StrategyNodeEditor block={(strategyBlocks || []).find(b => b.id === editingNodeId)!} onClose={() => setEditingNodeId(null)} onSave={(updates: any) => { updateStrategyBlock(editingNodeId, updates); setEditingNodeId(null); }} />}
       {personalizingEntry && <PersonalizationModal item={personalizingEntry} onClose={() => setPersonalizingEntry(null)} onSave={handleSavePersonalization} onCancelItem={handleCancelItem} />}
+      {editingObservationId && (
+        <ObservationModal 
+          entry={entries.find(e => e.id === editingObservationId)!} 
+          onClose={() => setEditingObservationId(null)} 
+          onSave={(text) => { updateEntry(editingObservationId, { observation: text }); setEditingObservationId(null); }} 
+        />
+      )}
 
       <div onMouseEnter={() => setIsHeaderHovered(true)} onMouseLeave={() => setIsHeaderHovered(false)} className={`transition-all duration-500 shrink-0 ${isHeaderPinned ? 'opacity-100 mb-6' : 'h-0 opacity-0 mb-0 overflow-visible'}`}>
         <div className={`bg-white dark:bg-[#020617] p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-500 ${!(isHeaderPinned || isHeaderHovered) ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
@@ -731,12 +740,13 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                       </div>
 
                       <div className="flex justify-center relative"><CustomDatePicker value={entry.paymentDate} onChange={(date) => updateEntry(entry.id, { paymentDate: date, status: date ? 'Pago' : entry.status, paidValue: date ? entry.estimatedValue : 0 })} onToggle={(isOpen) => setOpenDatePickerId(isOpen ? entry.id : null)} /></div>
-                      <div className="flex justify-center">{termometro && (<div className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-[#0A1022] border border-slate-100 dark:border-slate-800 shadow-sm ${termometro.color} w-full max-w-[178px] h-[24px] justify-center`}><termometro.icon className="w-3.5 h-3.5" /><span className="text-[9px] font-black uppercase whitespace-nowrap">{termometro.label}</span></div>)}</div>
+                      <div className="flex justify-center">{termometro && (<div className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-[#0A1022] border border-slate-100 dark:border-slate-800 shadow-sm ${termometro.color} w-full max-w-[178px] h-[24px] justify-center`}><termometro.icon className="w-3.5 h-3.5" /><span className="text-[8px] font-black uppercase whitespace-nowrap">{termometro.label}</span></div>)}</div>
                       <div className="flex justify-center gap-1">
                         <button onClick={() => setPersonalizingEntry(entry)} className={`w-6 h-6 rounded border transition-all flex items-center justify-center ${entry.hasOverride ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-800/50 text-slate-400'}`} title="Personalizar"><History className="w-4 h-4" /></button>
                       </div>
-                      <div className="flex justify-center h-full items-center">
-                        <input type="text" placeholder="..." value={entry.observation || ''} onChange={(e) => updateEntry(entry.id, { observation: e.target.value })} className="w-full h-[24px] max-w-[178px] bg-slate-50 dark:bg-[#0A1022] border border-slate-100 dark:border-slate-800 px-1.5 rounded-md text-[9px] font-black text-slate-500 outline-none truncate shadow-sm focus:border-sky-500/50" />
+                      <div className="flex justify-center h-full items-center gap-1 w-full px-1">
+                        <input type="text" placeholder="..." value={entry.observation || ''} onChange={(e) => updateEntry(entry.id, { observation: e.target.value })} className="flex-grow h-[24px] bg-slate-50 dark:bg-[#0A1022] border border-slate-100 dark:border-slate-800 px-1.5 rounded-md text-[9px] font-black text-slate-500 outline-none truncate shadow-sm focus:border-sky-500/50" />
+                        <button onClick={() => setEditingObservationId(entry.id)} className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-sky-500 hover:border-sky-500/30 transition-all shrink-0"><Maximize2 className="w-3 h-3" /></button>
                       </div>
                     </div>
                   );
@@ -751,6 +761,51 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
               <div className="flex-grow overflow-x-auto custom-scrollbar p-6 bg-slate-50/20 dark:bg-slate-950/20 animate-in slide-in-from-bottom-4 duration-500"><div className="flex gap-6 h-full items-start">{(currentMonthStrategies || []).length === 0 ? (<div className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-white/5 rounded-2xl bg-slate-50/30 dark:bg-white/[0.01]"><div className="w-12 h-12 bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-600 rounded-full flex items-center justify-center mb-4"><Lightbulb className="w-6 h-6" /></div><p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.4em] max-w-[200px] text-center">Nenhum nódulo tático no canvas</p></div>) : (currentMonthStrategies.map((block) => (<div key={block.id} className={`w-[300px] shrink-0 flex flex-col rounded-2xl border-2 transition-all shadow-xl h-full max-h-[320px] relative ${block.status === 'completed' ? 'border-emerald-500 ring-4 ring-emerald-500/10' : ''} ${block.color || 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>{block.status === 'completed' && <div className="absolute -top-3 -right-3 bg-emerald-500 text-white rounded-full p-1 shadow-lg z-20"><CheckCircle2 className="w-5 h-5" /></div>}<div className="p-4 border-b border-black/5 dark:border-white/5 flex items-center justify-between shrink-0"><div className="flex flex-col gap-0.5"><span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Vínculo: {block.itemTitle}</span><input type="text" value={block.title} onChange={(e) => updateStrategyBlock(block.id, { title: e.target.value.toUpperCase() })} className="bg-transparent border-none text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest outline-none w-full" /></div><div className="flex items-center gap-1"><button onClick={() => setEditingNodeId(block.id)} className="p-1.5 text-slate-400 hover:text-sky-500 transition-colors"><Edit3 className="w-4 h-4" /></button><button onClick={() => removeStrategyBlock(block.id)} className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"><Target className="w-4 h-4" /></button></div></div><div className="p-4 flex flex-col gap-3 flex-grow overflow-hidden"><div className="flex items-center gap-2"><div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${block.mode === 'table' ? 'bg-sky-500/10 text-sky-600' : block.mode === 'form' ? 'bg-amber-500/10 text-amber-600' : 'bg-slate-500/10 text-slate-600'}`}>{block.mode}</div><div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${block.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-slate-500/10 text-slate-600'}`}>{block.status}</div></div><div className="flex-grow flex-col bg-black/[0.02] dark:bg-white/[0.01] rounded-xl p-3 border border-black/5 dark:border-white/5"><div className="text-[10px] font-medium text-slate-600 dark:text-slate-400 line-clamp-6">{block.content || 'Nenhuma descrição tática definida. Abra o editor para configurar o planejamento.'}</div></div></div><div className="px-4 py-3 bg-black/[0.01] dark:bg-white/[0.02] border-t border-black/5 dark:border-white/5 flex gap-2 shrink-0">{['bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700', 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-500/30', 'bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-500/30', 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-500/30'].map(c => (<button key={c} onClick={() => updateStrategyBlock(block.id, { color: c })} className={`w-4 h-4 rounded-full border shrink-0 transition-transform hover:scale-125 ${c} ${block.color === c ? 'ring-2 ring-slate-900 dark:ring-white ring-offset-4 ring-offset-slate-900' : ''}`} />))}</div></div>)))}</div></div>
             )}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ObservationModal = ({ entry, onClose, onSave }: { entry: MonthlyEntry, onClose: () => void, onSave: (text: string) => void }) => {
+  const [text, setText] = useState(entry.observation || '');
+  return (
+    <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+      <div className="bg-white dark:bg-[#020617] w-full max-w-xl rounded-3xl border-2 border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#020617]">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-sky-600 text-white rounded-2xl shadow-lg"><FileText className="w-5 h-5" /></div>
+            <div>
+              <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest leading-none mb-1">Notas de Operação</h2>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate max-w-[300px]">{entry.item}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"><X className="w-5 h-5 text-slate-400" /></button>
+        </div>
+        <div className="p-8 space-y-6">
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Observação Detalhada</label>
+            <textarea 
+              value={text} 
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Digite aqui anotações importantes sobre este lançamento..."
+              autoFocus
+              className="w-full h-48 p-5 bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-medium text-slate-800 dark:text-slate-200 outline-none focus:border-sky-500 transition-all resize-none shadow-inner leading-relaxed"
+            />
+          </div>
+          <div className="flex items-center gap-3 p-4 bg-sky-500/5 border border-sky-500/10 rounded-2xl">
+            <Info className="w-4 h-4 text-sky-500 shrink-0" />
+            <p className="text-[9px] font-black text-sky-600/80 uppercase leading-snug">As notas expansíveis permitem o registro de detalhes operacionais que não cabem na visualização compacta da grade.</p>
+          </div>
+        </div>
+        <div className="p-8 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <button onClick={onClose} className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-rose-500 transition-colors">Cancelar</button>
+          <button 
+            onClick={() => onSave(text)}
+            className="px-12 py-4 bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-4"
+          >
+            <Check className="w-5 h-5" /> Salvar Nota
+          </button>
         </div>
       </div>
     </div>
