@@ -658,7 +658,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
             )}
 
             <div className="flex-grow flex flex-col min-h-0">
-              <div className={`grid ${auditGridCols} gap-2 px-4 py-2.5 bg-slate-900 dark:bg-[#020617] text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 sticky top-0 z-10 items-center select-none`}>
+              <div className={`grid ${auditGridCols} gap-2 px-4 py-2.5 bg-slate-900 dark:bg-[#0A1022] text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 sticky top-0 z-10 items-center select-none`}>
                 {['status', 'order', 'debtType', 'item', 'category', 'subCategory', 'installments', 'estimatedValue', 'dueDate', 'paymentDate', 'PONTUALIDADE', 'hasOverride', 'observation'].map(k => {
                   let label = '';
                   switch(k) {
@@ -691,7 +691,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                   const tagStyles = entry.subCategoryColor || getCategoryStyles(entry.category);
                   const st = getStatusConfig(entry.status, entry.id);
                   const termometro = getPontualidadeStatus(entry);
-                  const baseTagStyle = "flex items-center justify-center px-1.5 py-0.5 rounded-md bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 shadow-sm w-full h-[24px]";
+                  const baseTagStyle = "flex items-center justify-center px-1.5 py-0.5 rounded-md bg-slate-50 dark:bg-[#0A1022] border border-slate-100 dark:border-slate-800 shadow-sm w-full h-[24px]";
 
                   return (
                     <div key={entry.id} className={`grid ${auditGridCols} gap-2 px-4 py-1.5 items-center border-b border-slate-100 dark:border-slate-800 transition-all ${st.rowClass} relative`}>
@@ -723,7 +723,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                       </div>
 
                       <div className="flex justify-center">
-                        <div className={`${baseTagStyle} bg-slate-900 dark:bg-slate-950`}>
+                        <div className={`${baseTagStyle} bg-slate-900 dark:bg-[#0A1022]`}>
                           <span className="text-[9px] font-black uppercase text-slate-400 tabular-nums">
                             {formatDate(entry.dueDate)}
                           </span>
@@ -731,12 +731,12 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                       </div>
 
                       <div className="flex justify-center relative"><CustomDatePicker value={entry.paymentDate} onChange={(date) => updateEntry(entry.id, { paymentDate: date, status: date ? 'Pago' : entry.status, paidValue: date ? entry.estimatedValue : 0 })} onToggle={(isOpen) => setOpenDatePickerId(isOpen ? entry.id : null)} /></div>
-                      <div className="flex justify-center">{termometro && (<div className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-sm ${termometro.color} w-full max-w-[178px] h-[24px] justify-center`}><termometro.icon className="w-3.5 h-3.5" /><span className="text-[8px] font-black uppercase whitespace-nowrap">{termometro.label}</span></div>)}</div>
+                      <div className="flex justify-center">{termometro && (<div className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-[#0A1022] border border-slate-100 dark:border-slate-800 shadow-sm ${termometro.color} w-full max-w-[178px] h-[24px] justify-center`}><termometro.icon className="w-3.5 h-3.5" /><span className="text-[8px] font-black uppercase whitespace-nowrap">{termometro.label}</span></div>)}</div>
                       <div className="flex justify-center gap-1">
                         <button onClick={() => setPersonalizingEntry(entry)} className={`p-1 rounded border transition-all ${entry.hasOverride ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-800/50 text-slate-400'}`} title="Personalizar"><History className="w-3 h-3" /></button>
                       </div>
                       <div className="flex justify-center h-full items-center">
-                        <input type="text" placeholder="..." value={entry.observation || ''} onChange={(e) => updateEntry(entry.id, { observation: e.target.value })} className="w-full h-[24px] max-w-[178px] bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 px-1.5 rounded-md text-[10px] font-black text-slate-500 outline-none truncate shadow-sm focus:border-sky-500/50" />
+                        <input type="text" placeholder="..." value={entry.observation || ''} onChange={(e) => updateEntry(entry.id, { observation: e.target.value })} className="w-full h-[24px] max-w-[178px] bg-slate-50 dark:bg-[#0A1022] border border-slate-100 dark:border-slate-800 px-1.5 rounded-md text-[10px] font-black text-slate-500 outline-none truncate shadow-sm focus:border-sky-500/50" />
                       </div>
                     </div>
                   );
@@ -759,7 +759,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
 
 const SelectionModal = ({ entries, onClose, onSelect }: any) => (
   <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-    <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl border-2 border-slate-200 dark:border-slate-800 p-6">
+    <div className="bg-white dark:bg-slate-900 w-full max-sm rounded-2xl border-2 border-slate-200 dark:border-slate-800 p-6">
       <h3 className="text-sm font-black uppercase mb-4">Selecionar Item Tático</h3>
       <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
         {entries.map((e: any) => (
@@ -1161,7 +1161,7 @@ const CustomDatePicker = ({ value, onChange, onToggle }: { value: string, onChan
     <div className="relative" ref={containerRef}>
       <button 
         onClick={handleOpen} 
-        className={`h-[24px] px-3 rounded-md border text-[10px] font-black flex items-center gap-2 transition-all hover:scale-105 active:scale-95 w-full justify-center ${value ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-sm' : 'bg-slate-50 dark:bg-slate-950/40 border-slate-100 dark:border-slate-800 text-slate-400'}`}
+        className={`h-[24px] px-3 rounded-md border text-[10px] font-black flex items-center gap-2 transition-all hover:scale-105 active:scale-95 w-full justify-center ${value ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-sm' : 'bg-slate-50 dark:bg-[#0A1022] border-slate-100 dark:border-slate-800 text-slate-400'}`}
       >
         <CalendarDays className="w-3.5 h-3.5" /> 
         {value ? value.split('-').reverse().slice(0, 2).join('/') : '--/--'}
