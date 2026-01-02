@@ -241,6 +241,11 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
 
     if (!entryToUpdate || sourceYear === null) return;
 
+    // Se o item for um gasto variável, não permitir atualização de status
+    if (entryToUpdate.debtType === 'GASTOS VARIÁVEIS' && updates.status !== undefined && updates.status !== 'Pago') {
+        return;
+    }
+
     const isPast = sourceYear < activeYear || (sourceYear === activeYear && entryToUpdate.month < activeMonth);
     const isReturning = updates.month !== undefined && updates.month === entryToUpdate.competenceMonth;
     const shouldMigrate = !isReturning && isPast && entryToUpdate.status === 'Não Pago' && updates.status !== undefined;
@@ -340,6 +345,9 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
   };
 
   const togglePaymentStatus = (entry: MonthlyEntry) => {
+    // Bloquear alteração se for gasto variável
+    if (entry.debtType === 'GASTOS VARIÁVEIS') return;
+
     let nextStatus: PaymentStatus;
     switch(entry.status) {
       case 'Pendente': nextStatus = 'Planejado'; break;
@@ -733,7 +741,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                     <div key={entry.id} className={`grid ${auditGridCols} gap-2 px-4 py-1.5 items-center border-b border-slate-100 dark:border-slate-800 transition-all ${st.rowClass} relative`}>
                       <div className="flex justify-center"><button onClick={() => togglePaymentStatus(entry)} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${st.bgColor} text-white shadow-sm`}>{st.icon}</button></div>
                       <div className="flex justify-center"><OrdemSelector value={entry.order || 5} onChange={(newOrder) => updateEntry(entry.id, { order: newOrder })} /></div>
-                      <div className="flex justify-center"><span className={`text-[9px] font-black px-1.5 py-1 rounded-md border text-center w-full truncate dark:bg-[#0A1022] dark:border-slate-800 ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : entry.debtType === 'GASTOS VARIÁVEIS' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>{getDebtTypeLabel(entry.debtType)}</span></div>
+                      <div className="flex justify-center"><span className={`text-[9px] font-black px-1.5 py-1 rounded-md border text-center w-full truncate dark:bg-[#0A1022] dark:border-slate-800 ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>{getDebtTypeLabel(entry.debtType)}</span></div>
                       
                       <div className="flex justify-center overflow-hidden">
                         <div className={`${baseTagStyle} max-w-[178px] truncate`}>
@@ -844,7 +852,15 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
 
                     return (
                       <div key={entry.id} className={`grid ${auditGridCols} gap-2 px-4 py-1.5 items-center border-b border-slate-100 dark:border-slate-800 transition-all ${st.rowClass} relative`}>
-                        <div className="flex justify-center"><button onClick={() => togglePaymentStatus(entry)} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${st.bgColor} text-white shadow-sm`}>{st.icon}</button></div>
+                        <div className="flex justify-center">
+                          {/* BOTÃO DE STATUS BLOQUEADO PARA GASTOS VARIÁVEIS */}
+                          <button 
+                            className={`w-6 h-6 rounded flex items-center justify-center transition-all ${st.bgColor} text-white shadow-sm cursor-default opacity-100`}
+                            title="Itens variáveis são registrados automaticamente como pagos"
+                          >
+                            {st.icon}
+                          </button>
+                        </div>
                         <div className="flex justify-center"><OrdemSelector value={entry.order || 5} onChange={(newOrder) => updateEntry(entry.id, { order: newOrder })} /></div>
                         <div className="flex justify-center"><span className={`text-[9px] font-black px-1.5 py-1 rounded-md border text-center w-full truncate dark:bg-[#0A1022] dark:border-slate-800 bg-amber-500/10 text-amber-600 border-amber-500/20`}>{getDebtTypeLabel(entry.debtType)}</span></div>
                         
@@ -879,7 +895,13 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                           </div>
                         </div>
 
-                        <div className="flex justify-center relative"><CustomDatePicker value={entry.paymentDate} onChange={(date) => updateEntry(entry.id, { paymentDate: date, status: date ? 'Pago' : entry.status, paidValue: date ? entry.estimatedValue : 0 })} onToggle={(isOpen) => setOpenDatePickerId(isOpen ? entry.id : null)} /></div>
+                        {/* DATA DE PAGAMENTO BLOQUEADA PARA VARIÁVEIS */}
+                        <div className="flex justify-center relative">
+                          <div className={`h-[24px] px-3 rounded-md border text-[9px] font-black flex items-center gap-2 transition-all w-full justify-center bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-sm cursor-default`}>
+                            <CalendarDays className="w-3.5 h-3.5" /> 
+                            {entry.paymentDate ? entry.paymentDate.split('-').reverse().slice(0, 2).join('/') : '--/--'}
+                          </div>
+                        </div>
                         <div className="flex justify-center">{termometro && (<div className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-[#0A1022] border border-slate-100 dark:border-slate-800 shadow-sm ${termometro.color} w-full max-w-[178px] h-[24px] justify-center`}><termometro.icon className="w-3.5 h-3.5" /><span className="text-[8px] font-black uppercase whitespace-nowrap">{termometro.label}</span></div>)}</div>
                         <div className="flex justify-center gap-1">
                           <button onClick={() => setPersonalizingEntry(entry)} className={`w-6 h-6 rounded border transition-all flex items-center justify-center ${entry.hasOverride ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-800/50 text-slate-400'}`} title="Personalizar"><History className="w-4 h-4" /></button>
@@ -1442,7 +1464,7 @@ const CustomDatePicker = ({ value, onChange, onToggle }: { value: string, onChan
                 <button 
                   key={day} 
                   onClick={() => handleSelectDay(day)} 
-                  className={`h-7 w-7 text-[9px] font-black rounded-lg transition-all flex items-center justify-center
+                  className={`h-7 w-7 text-[10px] font-black rounded-lg transition-all flex items-center justify-center
                     ${isSelected ? 'bg-sky-500 text-white shadow-md scale-110 z-10' : isToday ? 'text-sky-500 border border-sky-500/30' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}
                   `}
                 >
