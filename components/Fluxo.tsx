@@ -346,6 +346,25 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
 
   const auditGridCols = "grid-cols-[0.4fr_0.4fr_0.7fr_1.1fr_0.8fr_0.7fr_0.5fr_0.8fr_0.8fr_0.8fr_0.9fr_0.6fr_1.0fr]";
 
+  const getTranslation = (key: string) => {
+    const dict: Record<string, string> = {
+      status: 'STATUS',
+      order: 'ORDEM',
+      debtType: 'TIPO',
+      item: 'ITEM',
+      category: 'CATEGORIA',
+      subCategory: 'TAG',
+      installments: 'PARCELA',
+      estimatedValue: 'VALOR',
+      dueDate: 'VENC.',
+      paymentDate: 'PAGAM.',
+      PONTUALIDADE: 'PONTUAL.',
+      hasOverride: 'AJUSTE',
+      observation: 'OBS.'
+    };
+    return dict[key] || key.toUpperCase();
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] overflow-hidden">
       {personalizingEntry && <PersonalizationModal item={personalizingEntry} onClose={() => setPersonalizingEntry(null)} onSave={(overrides) => {
@@ -430,7 +449,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
 
             <div className="flex-grow flex flex-col min-h-0">
               <div className={`grid ${auditGridCols} gap-2 px-4 py-2.5 bg-slate-900 dark:bg-[#020617] text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 sticky top-0 z-10 items-center`}>
-                {['status', 'order', 'debtType', 'item', 'category', 'subCategory', 'installments', 'estimatedValue', 'dueDate', 'paymentDate', 'PONTUALIDADE', 'hasOverride', 'observation'].map(k => (<button key={k} onClick={() => k !== 'PONTUALIDADE' && handleSort(k as any)} className="py-1 px-1 hover:bg-white/5 rounded transition-colors whitespace-nowrap">{k === 'item' ? 'ITEM' : k.toUpperCase()}</button>))}
+                {['status', 'order', 'debtType', 'item', 'category', 'subCategory', 'installments', 'estimatedValue', 'dueDate', 'paymentDate', 'PONTUALIDADE', 'hasOverride', 'observation'].map(k => (<button key={k} onClick={() => k !== 'PONTUALIDADE' && handleSort(k as any)} className="py-1 px-1 hover:bg-white/5 rounded transition-colors whitespace-nowrap">{getTranslation(k)}</button>))}
               </div>
               <div className="flex-grow overflow-y-auto custom-scrollbar">
                 {currentMonthEntries.map((entry, idx) => {
