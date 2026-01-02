@@ -453,10 +453,10 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
 
   const getCategoryStyles = (category: string) => {
     switch (category.toUpperCase()) {
-      case 'ESSENCIAIS': return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
-      case 'QUALIDADE DE VIDA': return 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20';
-      case 'FUTURO': return 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20';
-      case 'DÍVIDAS': return 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20';
+      case 'ESSENCIAIS': return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 dark:border-emerald-500/10';
+      case 'QUALIDADE DE VIDA': return 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20 dark:border-sky-500/10';
+      case 'FUTURO': return 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 dark:border-rose-500/10';
+      case 'DÍVIDAS': return 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20 dark:border-violet-500/10';
       default: return 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20';
     }
   };
@@ -538,7 +538,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
           </div>
           {!isIncomeCollapsed && (
             <div className="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-3 animate-in fade-in duration-500">
-              {(currentMonthIncomes || []).length === 0 ? (<div className="h-full flex items-center justify-center border border-dashed border-slate-100 dark:border-slate-800/50 rounded-lg bg-slate-50/20 dark:bg-slate-950/20 text-center"><p className="text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-[0.4em]">Caixa Vazio</p></div>) : (currentMonthIncomes.map(income => (<div key={income.id} className="group p-3 bg-slate-50/40 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800 rounded-lg transition-all flex flex-col gap-3"><div className="flex items-center gap-2"><div className="flex-grow flex flex-col gap-1"><label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Fonte</label><input type="text" placeholder="..." value={income.source} onChange={(e) => updateIncome(income.id, 'source', e.target.value)} className="theme-transition w-full h-[24px] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2 rounded font-black text-[11px] outline-none text-slate-900 dark:text-white" /></div><div className="w-[100px] flex flex-col gap-1"><label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Valor</label><input type="number" placeholder="0,00" value={income.value || ''} onChange={(e) => updateIncome(income.id, 'value', parseFloat(e.target.value) || 0)} className="theme-transition w-full h-[24px] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2 rounded font-black text-[11px] text-emerald-600 text-right outline-none" /></div><div className="w-[45px] flex flex-col gap-1"><label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center">Dia</label><input type="number" min="1" max="31" value={income.receivedDay ?? ''} onChange={(e) => updateIncome(income.id, 'receivedDay', e.target.value ? parseInt(e.target.value) : undefined)} className="theme-transition w-full h-[24px] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-1 rounded font-black text-[11px] text-slate-500 text-center outline-none" /></div><button onClick={() => removeIncome(income.id)} className="p-1 mt-4 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 className="w-4 h-4" /></button></div></div>)))}
+              {(currentMonthIncomes || []).length === 0 ? (<div className="h-full flex items-center justify-center border border-dashed border-slate-100 dark:border-slate-800/50 rounded-lg bg-slate-50/20 dark:bg-slate-950/20 text-center"><p className="text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-[0.4em]">Caixa Vazio</p></div>) : (currentMonthIncomes.map(income => (<div key={income.id} className="group p-3 bg-slate-50/40 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800 rounded-lg transition-all flex flex-col gap-3"><div className="flex items-center gap-2"><div className="flex-grow flex flex-col gap-1"><label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Fonte</label><input type="text" placeholder="..." value={income.source} onChange={(e) => updateIncome(income.id, 'source', e.target.value)} className="theme-transition w-full h-[24px] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2 rounded font-black text-[9px] outline-none text-slate-900 dark:text-white" /></div><div className="w-[100px] flex flex-col gap-1"><label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Valor</label><input type="number" placeholder="0,00" value={income.value || ''} onChange={(e) => updateIncome(income.id, 'value', parseFloat(e.target.value) || 0)} className="theme-transition w-full h-[24px] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2 rounded font-black text-[9px] text-emerald-600 text-right outline-none" /></div><div className="w-[45px] flex flex-col gap-1"><label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center">Dia</label><input type="number" min="1" max="31" value={income.receivedDay ?? ''} onChange={(e) => updateIncome(income.id, 'receivedDay', e.target.value ? parseInt(e.target.value) : undefined)} className="theme-transition w-full h-[24px] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-1 rounded font-black text-[9px] text-slate-500 text-center outline-none" /></div><button onClick={() => removeIncome(income.id)} className="p-1 mt-4 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 className="w-4 h-4" /></button></div></div>)))}
             </div>
           )}
         </div>
@@ -585,7 +585,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                         placeholder="Nome do lançamento..." 
                         value={filterSearch} 
                         onChange={(e) => setFilterSearch(e.target.value)} 
-                        className="w-full h-9 pl-9 pr-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-[10px] font-black text-slate-900 dark:text-white outline-none focus:border-sky-500 transition-all shadow-inner"
+                        className="w-full h-9 pl-9 pr-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-[9px] font-black text-slate-900 dark:text-white outline-none focus:border-sky-500 transition-all shadow-inner"
                       />
                     </div>
                   </div>
@@ -697,11 +697,11 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                     <div key={entry.id} className={`grid ${auditGridCols} gap-2 px-4 py-1.5 items-center border-b border-slate-100 dark:border-slate-800 transition-all ${st.rowClass} relative`}>
                       <div className="flex justify-center"><button onClick={() => togglePaymentStatus(entry)} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${st.bgColor} text-white shadow-sm`}>{st.icon}</button></div>
                       <div className="flex justify-center"><OrdemSelector value={entry.order || 5} onChange={(newOrder) => updateEntry(entry.id, { order: newOrder })} /></div>
-                      <div className="flex justify-center"><span className={`text-[8px] font-black px-1.5 py-1 rounded-md border text-center w-full truncate dark:bg-[#0A1022] dark:border-slate-800 ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>{getDebtTypeLabel(entry.debtType)}</span></div>
+                      <div className="flex justify-center"><span className={`text-[9px] font-black px-1.5 py-1 rounded-md border text-center w-full truncate dark:bg-[#0A1022] dark:border-slate-800 ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>{getDebtTypeLabel(entry.debtType)}</span></div>
                       
                       <div className="flex justify-center overflow-hidden">
                         <div className={`${baseTagStyle} max-w-[178px] truncate`}>
-                          <span className={`text-[10px] font-black uppercase tracking-tight truncate ${st.textClass}`}>{entry.item}</span>
+                          <span className={`text-[9px] font-black uppercase tracking-tight truncate ${st.textClass}`}>{entry.item}</span>
                         </div>
                       </div>
                       
@@ -716,7 +716,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
 
                       <div className="flex justify-center">
                         <div className={`${baseTagStyle} ${entry.hasOverride ? 'border-amber-500/30' : ''}`}>
-                          <span className={`text-[10px] font-black uppercase tabular-nums ${entry.hasOverride ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
+                          <span className={`text-[9px] font-black uppercase tabular-nums ${entry.hasOverride ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
                             {formatCurrency(entry.estimatedValue)}
                           </span>
                         </div>
@@ -731,12 +731,12 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                       </div>
 
                       <div className="flex justify-center relative"><CustomDatePicker value={entry.paymentDate} onChange={(date) => updateEntry(entry.id, { paymentDate: date, status: date ? 'Pago' : entry.status, paidValue: date ? entry.estimatedValue : 0 })} onToggle={(isOpen) => setOpenDatePickerId(isOpen ? entry.id : null)} /></div>
-                      <div className="flex justify-center">{termometro && (<div className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-[#0A1022] border border-slate-100 dark:border-slate-800 shadow-sm ${termometro.color} w-full max-w-[178px] h-[24px] justify-center`}><termometro.icon className="w-3.5 h-3.5" /><span className="text-[8px] font-black uppercase whitespace-nowrap">{termometro.label}</span></div>)}</div>
+                      <div className="flex justify-center">{termometro && (<div className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-[#0A1022] border border-slate-100 dark:border-slate-800 shadow-sm ${termometro.color} w-full max-w-[178px] h-[24px] justify-center`}><termometro.icon className="w-3.5 h-3.5" /><span className="text-[9px] font-black uppercase whitespace-nowrap">{termometro.label}</span></div>)}</div>
                       <div className="flex justify-center gap-1">
-                        <button onClick={() => setPersonalizingEntry(entry)} className={`p-1 rounded border transition-all ${entry.hasOverride ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-800/50 text-slate-400'}`} title="Personalizar"><History className="w-3 h-3" /></button>
+                        <button onClick={() => setPersonalizingEntry(entry)} className={`w-6 h-6 rounded border transition-all flex items-center justify-center ${entry.hasOverride ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-800/50 text-slate-400'}`} title="Personalizar"><History className="w-4 h-4" /></button>
                       </div>
                       <div className="flex justify-center h-full items-center">
-                        <input type="text" placeholder="..." value={entry.observation || ''} onChange={(e) => updateEntry(entry.id, { observation: e.target.value })} className="w-full h-[24px] max-w-[178px] bg-slate-50 dark:bg-[#0A1022] border border-slate-100 dark:border-slate-800 px-1.5 rounded-md text-[10px] font-black text-slate-500 outline-none truncate shadow-sm focus:border-sky-500/50" />
+                        <input type="text" placeholder="..." value={entry.observation || ''} onChange={(e) => updateEntry(entry.id, { observation: e.target.value })} className="w-full h-[24px] max-w-[178px] bg-slate-50 dark:bg-[#0A1022] border border-slate-100 dark:border-slate-800 px-1.5 rounded-md text-[9px] font-black text-slate-500 outline-none truncate shadow-sm focus:border-sky-500/50" />
                       </div>
                     </div>
                   );
@@ -1005,7 +1005,7 @@ const ModalDatePicker = ({ value, onChange }: { value: string, onChange: (date: 
           </div>
           
           <div className="grid grid-cols-7 gap-1 mb-2">
-            {daysOfWeek.map(d => <div key={d} className="text-center text-[10px] font-black text-slate-400 py-1">{d}</div>)}
+            {daysOfWeek.map(d => <div key={d} className="text-center text-[9px] font-black text-slate-400 py-1">{d}</div>)}
           </div>
 
           <div className="grid grid-cols-7 gap-1.5">
@@ -1068,7 +1068,7 @@ const OrdemSelector = ({ value, onChange }: { value: number, onChange: (v: numbe
         onClick={() => setIsOpen(!isOpen)}
         className={`w-10 h-[24px] rounded-lg border flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm ${getOrderStyle(value)}`}
       >
-        <span className="text-[11px] font-black">{value}</span>
+        <span className="text-[9px] font-black">{value}</span>
       </button>
 
       {isOpen && (
@@ -1077,7 +1077,7 @@ const OrdemSelector = ({ value, onChange }: { value: number, onChange: (v: numbe
             <button
               key={num}
               onClick={() => { onChange(num); setIsOpen(false); }}
-              className={`w-full h-8 px-3 rounded-lg border font-black text-[11px] transition-all hover:brightness-95 flex items-center justify-center ${getOrderStyle(num)} ${value === num ? 'ring-2 ring-slate-900 dark:ring-white scale-90' : 'opacity-80 hover:opacity-100'}`}
+              className={`w-full h-8 px-3 rounded-lg border font-black text-[9px] transition-all hover:brightness-95 flex items-center justify-center ${getOrderStyle(num)} ${value === num ? 'ring-2 ring-slate-900 dark:ring-white scale-90' : 'opacity-80 hover:opacity-100'}`}
             >
               {num}
             </button>
@@ -1161,7 +1161,7 @@ const CustomDatePicker = ({ value, onChange, onToggle }: { value: string, onChan
     <div className="relative" ref={containerRef}>
       <button 
         onClick={handleOpen} 
-        className={`h-[24px] px-3 rounded-md border text-[10px] font-black flex items-center gap-2 transition-all hover:scale-105 active:scale-95 w-full justify-center ${value ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-sm' : 'bg-slate-50 dark:bg-[#0A1022] border-slate-100 dark:border-slate-800 text-slate-400'}`}
+        className={`h-[24px] px-3 rounded-md border text-[9px] font-black flex items-center gap-2 transition-all hover:scale-105 active:scale-95 w-full justify-center ${value ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-sm' : 'bg-slate-50 dark:bg-[#0A1022] border-slate-100 dark:border-slate-800 text-slate-400'}`}
       >
         <CalendarDays className="w-3.5 h-3.5" /> 
         {value ? value.split('-').reverse().slice(0, 2).join('/') : '--/--'}
