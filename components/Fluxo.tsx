@@ -673,7 +673,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                     case 'dueDate': label = 'VENCIMENTO'; break;
                     case 'paymentDate': label = 'PAGAMENTO'; break;
                     case 'PONTUALIDADE': label = 'PONTUALIDADE'; break;
-                    case 'hasOverride': label = 'AJUSTE'; break;
+                    case 'hasOverride': label = 'PERSONALIZAÇÃO'; break;
                     case 'observation': label = 'OBSERVAÇÃO'; break;
                     default: label = k.toUpperCase();
                   }
