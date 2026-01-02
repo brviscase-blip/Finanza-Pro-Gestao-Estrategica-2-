@@ -130,7 +130,6 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
       if (today > dueDate) return { label: 'ATRASADO', color: 'text-rose-500', icon: AlertTriangle };
       const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       if (diffDays <= 7 && diffDays >= 0) return { label: `PRAZO (${diffDays}d)`, color: 'text-amber-500', icon: Clock };
-      // Fix: CalendarIcon not found, use Calendar which is already imported from lucide-react
       return { label: 'NO PRAZO', color: 'text-slate-400', icon: Calendar };
     }
   };
@@ -358,13 +357,15 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
     switch(status) {
       case 'Pago': return { icon: <ShieldCheck className="w-4 h-4" />, bgColor: 'bg-emerald-500', rowClass: 'bg-emerald-500/[0.05] dark:bg-emerald-500/[0.03]', textClass: 'text-emerald-700 dark:text-emerald-400 line-through opacity-60' };
       case 'Não Pago': return { icon: <AlertCircle className="w-4 h-4" />, bgColor: 'bg-rose-500', rowClass: 'bg-rose-500/[0.05] dark:bg-rose-500/[0.03]', textClass: 'text-rose-600 dark:text-rose-400 italic' };
-      // Fix: CalendarIcon not found, use Calendar which is already imported from lucide-react
       case 'Planejado': return { icon: <Calendar className="w-4 h-4" />, bgColor: 'bg-sky-500', rowClass: 'bg-sky-500/[0.03] dark:bg-sky-500/[0.02]', textClass: 'text-slate-900 dark:text-white font-black' };
       default: return { icon: <Clock className="w-4 h-4" />, bgColor: 'bg-white dark:bg-slate-950', rowClass: '', textClass: 'text-slate-900 dark:text-white' };
     }
   };
 
   const auditGridCols = "grid-cols-[0.4fr_0.4fr_0.7fr_1.1fr_0.8fr_0.7fr_0.5fr_0.8fr_0.8fr_0.8fr_0.9fr_0.6fr_1.0fr]";
+
+  // Grade para o consumo diário - Alinhada visualmente ao auditGridCols mas simplificada
+  const dailyGridCols = "grid-cols-[0.8fr_0.8fr_2fr_1.1fr_0.7fr_auto]";
 
   const getTranslation = (key: string) => {
     const dict: Record<string, string> = {
@@ -498,6 +499,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
             </div>
           </div>
 
+          {/* CARD CONSUMO DIÁRIO - TOTALMENTE REFORMULADO NO PADRÃO SUPERIOR */}
           <div className={`${isStrategyCollapsed ? 'flex-none' : 'flex-1'} flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden min-h-0 transition-all duration-500`}>
             <div className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/[0.02]">
               <div className="flex items-center gap-3">
@@ -509,7 +511,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
               </div>
               <div className="flex items-center gap-4">
                 {!isStrategyCollapsed && (
-                  <div className="px-4 py-2 bg-slate-900 dark:bg-slate-800 rounded-lg border border-slate-700 shadow-sm flex items-center gap-3">
+                  <div className="px-4 py-2 bg-[#0F172A] dark:bg-slate-800 rounded-lg border border-slate-700 shadow-sm flex items-center gap-3">
                     <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Diário:</span>
                     <span className="text-sm font-black text-amber-400 tabular-nums">{formatCurrency(totalDailySpent)}</span>
                   </div>
@@ -519,101 +521,102 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
             </div>
 
             {!isStrategyCollapsed && (
-              <div className="flex flex-col h-full bg-slate-50/20 dark:bg-slate-950/20 p-6 overflow-hidden">
-                {/* Formulário de Adição Rápida */}
-                <div className="grid grid-cols-[0.7fr_0.8fr_1fr_0.8fr_0.6fr_auto] items-end gap-3 mb-6 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Status</label>
-                    <div className="h-11 px-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center">
-                       <span className="text-[10px] font-black text-emerald-600 uppercase">PAGO</span>
+              <div className="flex-grow flex flex-col min-h-0 overflow-hidden">
+                {/* Cabeçalho da Tabela Diária */}
+                <div className={`grid ${dailyGridCols} gap-4 px-6 py-2.5 bg-slate-900 dark:bg-[#020617] text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 sticky top-0 z-10 items-center`}>
+                  <div className="text-center">STATUS</div>
+                  <div className="text-center">TIPO</div>
+                  <div>ITEM</div>
+                  <div className="text-right">VALOR</div>
+                  <div className="text-center">PAGAMENTO</div>
+                  <div className="w-[80px]"></div>
+                </div>
+
+                <div className="flex-grow overflow-y-auto custom-scrollbar">
+                  {/* Linha de Inserção (Integrada como se fosse a primeira linha da tabela) */}
+                  <div className={`grid ${dailyGridCols} gap-4 px-6 py-3 items-center border-b-2 border-slate-200 dark:border-slate-800 bg-sky-500/[0.03] dark:bg-sky-500/[0.01]`}>
+                    <div className="flex justify-center">
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[8px] font-black border border-emerald-500/20">PAGO</span>
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo</label>
-                    <div className="h-11 px-4 bg-sky-500/10 border border-sky-500/20 rounded-xl flex items-center justify-center">
-                       <span className="text-[10px] font-black text-sky-600 uppercase">VARIÁVEL</span>
+                    <div className="flex justify-center">
+                      <span className="px-2 py-0.5 rounded bg-sky-500/10 text-sky-600 text-[8px] font-black border border-sky-500/20">VARIÁVEL</span>
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Item</label>
-                    <div className="relative">
-                      <Receipt className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                      <input 
-                        type="text" 
-                        placeholder="Ex: Pão..." 
-                        value={dailyItemName}
-                        onChange={(e) => setDailyItemName(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddDailyPurchase()}
-                        className="w-full h-11 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-black text-slate-900 dark:text-white outline-none focus:border-amber-500 transition-all" 
-                      />
+                    <div>
+                      <div className="relative">
+                        <Receipt className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300" />
+                        <input 
+                          type="text" 
+                          placeholder="Descrição..." 
+                          value={dailyItemName}
+                          onChange={(e) => setDailyItemName(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddDailyPurchase()}
+                          className="w-full h-[32px] pl-8 pr-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-[11px] font-black text-slate-900 dark:text-white outline-none focus:border-amber-500 transition-all uppercase" 
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Valor</label>
-                    <div className="relative">
+                    <div>
                       <input 
                         type="text" 
                         placeholder="R$ 0,00" 
                         value={dailyItemValueFormatted}
                         onChange={(e) => setDailyItemValueFormatted(formatCurrencyInput(e.target.value))}
                         onKeyDown={(e) => e.key === 'Enter' && handleAddDailyPurchase()}
-                        className="w-full h-11 px-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-black text-amber-600 outline-none focus:border-amber-500 transition-all text-right tabular-nums" 
+                        className="w-full h-[32px] px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-[11px] font-black text-amber-600 outline-none focus:border-amber-500 transition-all text-right tabular-nums" 
                       />
                     </div>
+                    <div className="flex justify-center">
+                      <input 
+                        type="number" 
+                        min="1" 
+                        max="31" 
+                        value={dailyItemDay}
+                        onChange={(e) => setDailyItemDay(e.target.value)}
+                        className="w-[50px] h-[32px] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-[11px] font-black text-slate-500 text-center outline-none focus:border-amber-500 transition-all" 
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <button 
+                        onClick={handleAddDailyPurchase}
+                        disabled={!dailyItemName || !dailyItemValueFormatted}
+                        className="h-[32px] px-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-md font-black text-[9px] uppercase tracking-widest shadow-md hover:scale-[1.05] active:scale-95 transition-all disabled:opacity-30"
+                      >
+                        Lançar
+                      </button>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center">Pagamento</label>
-                    <input 
-                      type="number" 
-                      min="1" 
-                      max="31" 
-                      value={dailyItemDay}
-                      onChange={(e) => setDailyItemDay(e.target.value)}
-                      className="w-full h-11 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-black text-slate-500 text-center outline-none focus:border-amber-500 transition-all" 
-                    />
-                  </div>
-                  <button 
-                    onClick={handleAddDailyPurchase}
-                    disabled={!dailyItemName || !dailyItemValueFormatted}
-                    className="h-11 px-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:scale-[1.05] active:scale-95 transition-all disabled:opacity-30 disabled:grayscale"
-                  >
-                    Lançar
-                  </button>
-                </div>
 
-                {/* Lista de Compras */}
-                <div className="flex-grow overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                  {/* Lista de Registros (Linhas da Tabela) */}
                   {(currentMonthStrategies || []).length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl opacity-30">
+                    <div className="py-20 flex flex-col items-center justify-center opacity-20">
                       <Tag className="w-12 h-12 text-slate-300 mb-3" />
-                      <p className="text-[10px] font-black uppercase tracking-[0.4em]">Nenhum gasto diário</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.4em]">Sem microgastos registrados</p>
                     </div>
                   ) : (
                     currentMonthStrategies.map((item) => (
-                      <div key={item.id} className="grid grid-cols-[0.7fr_0.8fr_1fr_0.8fr_0.6fr_auto] items-center gap-4 p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all group animate-in slide-in-from-right-2">
+                      <div key={item.id} className={`grid ${dailyGridCols} gap-4 px-6 py-2 items-center border-b border-slate-100 dark:border-slate-800 transition-all hover:bg-slate-50 dark:hover:bg-white/[0.01] group animate-in slide-in-from-right-1`}>
                         <div className="flex justify-center">
-                          <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[8px] font-black border border-emerald-500/20">PAGO</span>
+                          <span className="px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-600 text-[7px] font-black border border-emerald-500/10">PAGO</span>
                         </div>
                         <div className="flex justify-center">
-                          <span className="px-2 py-0.5 rounded bg-sky-500/10 text-sky-600 text-[8px] font-black border border-sky-500/20">VARIÁVEL</span>
+                          <span className="px-1.5 py-0.5 rounded-sm bg-sky-500/10 text-sky-600 text-[7px] font-black border border-sky-500/10 uppercase">Variável</span>
                         </div>
                         <div className="min-w-0">
-                          <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight truncate block">{item.title}</span>
+                          <span className="text-[11px] font-black text-slate-900 dark:text-white uppercase truncate block tracking-tight">{item.title}</span>
                         </div>
                         <div className="text-right">
-                          <span className="text-sm font-black text-amber-500 tabular-nums">{formatCurrency(parseFloat(item.content))}</span>
+                          <span className="text-[11px] font-black text-amber-500 tabular-nums">{formatCurrency(parseFloat(item.content))}</span>
                         </div>
                         <div className="flex justify-center">
-                          <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center font-black text-[10px] text-slate-400 border border-slate-100 dark:border-slate-700">
+                          <div className="w-7 h-7 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-[9px] text-slate-500 border border-slate-200 dark:border-slate-700 tabular-nums">
                             {item.date}
                           </div>
                         </div>
                         <div className="flex justify-end">
                           <button 
                             onClick={() => removeDailyPurchase(item.id)}
-                            className="p-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                            className="p-1.5 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
