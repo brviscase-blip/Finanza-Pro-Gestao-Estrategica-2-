@@ -60,8 +60,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
   const [personalizingEntry, setPersonalizingEntry] = useState<MonthlyEntry | null>(null);
   const [editingObservationId, setEditingObservationId] = useState<string | null>(null);
-  const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
-  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [isAddVariableModalOpen, setIsAddVariableModalOpen] = useState(false);
   const [openDatePickerId, setOpenDatePickerId] = useState<string | null>(null);
   
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>({ key: 'order', direction: 'asc' });
@@ -87,13 +86,12 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
       if (e.key === 'Escape') {
         if (personalizingEntry) setPersonalizingEntry(null);
         else if (editingObservationId) setEditingObservationId(null);
-        else if (isSelectionModalOpen) setIsSelectionModalOpen(false);
-        else if (editingNodeId) setEditingNodeId(null);
+        else if (isAddVariableModalOpen) setIsAddVariableModalOpen(false);
       }
     };
     window.addEventListener('keydown', handleGlobalEsc);
     return () => window.removeEventListener('keydown', handleGlobalEsc);
-  }, [personalizingEntry, isSelectionModalOpen, editingNodeId, editingObservationId]);
+  }, [personalizingEntry, editingObservationId, isAddVariableModalOpen]);
 
   const handleSort = (key: SortKey) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -467,6 +465,42 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
     return type; // 'PASSIVOS'
   };
 
+  const handleAddVariableItem = (newItemData: any) => {
+    const newEntry: MonthlyEntry = {
+      id: crypto.randomUUID(),
+      itemId: crypto.randomUUID(), // Item isolado
+      item: newItemData.item.toUpperCase(),
+      year: activeYear,
+      month: activeMonth,
+      category: newItemData.category,
+      subCategory: newItemData.subCategory,
+      installments: '-',
+      estimatedValue: newItemData.value,
+      paidValue: 0,
+      dueDate: newItemData.dueDate,
+      paymentDate: '',
+      status: 'Pendente',
+      group: newItemData.category,
+      observation: newItemData.observation,
+      order: 5,
+      debtType: 'GASTOS VARIÁVEIS'
+    };
+
+    updateActiveProfile(prev => ({
+      ...prev,
+      monthlyEntries: [...(prev.monthlyEntries || []), newEntry]
+    }));
+    setIsAddVariableModalOpen(false);
+  };
+
+  const updateActiveProfile = (updater: (prev: YearProfile) => YearProfile) => {
+    setProfiles(prev => {
+      const currentProfile = prev[activeYear];
+      if (!currentProfile) return prev;
+      return { ...prev, [activeYear]: updater(currentProfile) };
+    });
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] overflow-hidden">
       {personalizingEntry && <PersonalizationModal item={personalizingEntry} onClose={() => setPersonalizingEntry(null)} onSave={handleSavePersonalization} onCancelItem={handleCancelItem} />}
@@ -475,6 +509,14 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
           entry={entries.find(e => e.id === editingObservationId)!} 
           onClose={() => setEditingObservationId(null)} 
           onSave={(text) => { updateEntry(editingObservationId, { observation: text }); setEditingObservationId(null); }} 
+        />
+      )}
+      {isAddVariableModalOpen && (
+        <AddVariableModal 
+          onClose={() => setIsAddVariableModalOpen(false)} 
+          onSave={handleAddVariableItem} 
+          activeMonth={activeMonth}
+          activeYear={activeYear}
         />
       )}
 
@@ -745,9 +787,20 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                   <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Painel de Monitoramento Flexível</span>
                 </div>
               </div>
-              <button onClick={() => setIsStrategyCollapsed(!isStrategyCollapsed)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-all">
-                {isStrategyCollapsed ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
-              </button>
+              <div className="flex items-center gap-2">
+                {!isStrategyCollapsed && (
+                  <button 
+                    onClick={() => setIsAddVariableModalOpen(true)}
+                    className="p-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg hover:scale-105 transition-all shadow-md flex items-center justify-center"
+                    title="Adicionar Gasto Variável"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                )}
+                <button onClick={() => setIsStrategyCollapsed(!isStrategyCollapsed)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-all">
+                  {isStrategyCollapsed ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             {!isStrategyCollapsed && (
               <div className="flex-grow flex flex-col min-h-0">
@@ -838,6 +891,99 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
               </div>
             )}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AddVariableModal = ({ onClose, onSave, activeMonth, activeYear }: any) => {
+  const [item, setItem] = useState('');
+  const [value, setValue] = useState(0);
+  const [category, setCategory] = useState<CategoryType>('QUALIDADE DE VIDA');
+  const [subCategory, setSubCategory] = useState('-');
+  const [dueDate, setDueDate] = useState(`${activeYear}-${String(activeMonth).padStart(2, '0')}-10`);
+  const [observation, setObservation] = useState('');
+
+  const formatCurrencyInput = (val: string) => {
+    const digits = val.replace(/\D/g, '');
+    return (parseInt(digits) / 100) || 0;
+  };
+
+  return (
+    <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+      <div className="bg-white dark:bg-[#020617] w-full max-w-lg rounded-3xl border-2 border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#020617]">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg"><Plus className="w-5 h-5" /></div>
+            <div>
+              <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest leading-none mb-1">Cadastrar Gasto Variável</h2>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Entrada Direta no Fluxo Mensal</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"><X className="w-5 h-5 text-slate-400" /></button>
+        </div>
+        
+        <div className="p-8 space-y-6">
+          <div className="grid grid-cols-1 gap-6">
+            <div>
+              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Descrição do Item</label>
+              <input type="text" placeholder="EX: LANCHE, TAXI, EXTRA..." value={item} onChange={(e) => setItem(e.target.value.toUpperCase())} className="w-full h-12 px-4 bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-black outline-none focus:border-sky-500 transition-all text-slate-900 dark:text-white" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Valor Estimado</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">R$</span>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    placeholder="0,00" 
+                    value={value || ''} 
+                    onChange={(e) => setValue(parseFloat(e.target.value) || 0)} 
+                    className="w-full h-12 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-black outline-none focus:border-sky-500 transition-all text-emerald-600 tabular-nums" 
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Data Vencimento</label>
+                <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full h-12 px-4 bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-black outline-none focus:border-sky-500 transition-all text-slate-900 dark:text-white" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Categoria</label>
+                <select value={category} onChange={(e) => setCategory(e.target.value as CategoryType)} className="w-full h-12 px-4 bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-black uppercase outline-none">
+                  <option value="ESSENCIAIS">ESSENCIAIS</option>
+                  <option value="QUALIDADE DE VIDA">QUALIDADE DE VIDA</option>
+                  <option value="FUTURO">FUTURO</option>
+                  <option value="DÍVIDAS">DÍVIDAS</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tag (Sub-Cat)</label>
+                <input type="text" placeholder="TAG..." value={subCategory} onChange={(e) => setSubCategory(e.target.value.toUpperCase())} className="w-full h-12 px-4 bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-black outline-none" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Anotação Adicional</label>
+              <textarea placeholder="..." value={observation} onChange={(e) => setObservation(e.target.value)} className="w-full h-24 p-4 bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-medium outline-none focus:border-sky-500 transition-all resize-none shadow-inner" />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-8 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <button onClick={onClose} className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-rose-500 transition-colors">Descartar</button>
+          <button 
+            disabled={!item || value <= 0}
+            onClick={() => onSave({ item, value, category, subCategory, dueDate, observation })}
+            className="px-12 py-4 bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3 disabled:opacity-30"
+          >
+            <Check className="w-4 h-4" /> Finalizar Cadastro
+          </button>
         </div>
       </div>
     </div>
@@ -1292,7 +1438,7 @@ const CustomDatePicker = ({ value, onChange, onToggle }: { value: string, onChan
                 <button 
                   key={day} 
                   onClick={() => handleSelectDay(day)} 
-                  className={`h-7 w-7 text-[9px] font-black rounded-lg transition-all flex items-center justify-center
+                  className={`h-7 w-7 text-[10px] font-black rounded-lg transition-all flex items-center justify-center
                     ${isSelected ? 'bg-sky-500 text-white shadow-md scale-110 z-10' : isToday ? 'text-sky-500 border border-sky-500/30' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}
                   `}
                 >
