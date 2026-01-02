@@ -481,10 +481,10 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
       subCategory: newItemData.subCategory,
       installments: '-',
       estimatedValue: newItemData.value,
-      paidValue: 0,
+      paidValue: newItemData.value, // Valor pago preenchido
       dueDate: newItemData.dueDate,
-      paymentDate: '',
-      status: 'Pendente',
+      paymentDate: new Date().toISOString().split('T')[0], // Data de pagamento de hoje
+      status: 'Pago', // Status 'Pago' por padrão conforme solicitado
       group: newItemData.category,
       observation: newItemData.observation,
       order: 5,
@@ -733,7 +733,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                     <div key={entry.id} className={`grid ${auditGridCols} gap-2 px-4 py-1.5 items-center border-b border-slate-100 dark:border-slate-800 transition-all ${st.rowClass} relative`}>
                       <div className="flex justify-center"><button onClick={() => togglePaymentStatus(entry)} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${st.bgColor} text-white shadow-sm`}>{st.icon}</button></div>
                       <div className="flex justify-center"><OrdemSelector value={entry.order || 5} onChange={(newOrder) => updateEntry(entry.id, { order: newOrder })} /></div>
-                      <div className="flex justify-center"><span className={`text-[9px] font-black px-1.5 py-1 rounded-md border text-center w-full truncate dark:bg-[#0A1022] dark:border-slate-800 ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>{getDebtTypeLabel(entry.debtType)}</span></div>
+                      <div className="flex justify-center"><span className={`text-[9px] font-black px-1.5 py-1 rounded-md border text-center w-full truncate dark:bg-[#0A1022] dark:border-slate-800 ${entry.debtType === 'PASSIVOS' ? 'bg-violet-500/10 text-violet-600 border-violet-500/20' : entry.debtType === 'GASTOS VARIÁVEIS' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-sky-500/10 text-sky-600 border-sky-500/20'}`}>{getDebtTypeLabel(entry.debtType)}</span></div>
                       
                       <div className="flex justify-center overflow-hidden">
                         <div className={`${baseTagStyle} max-w-[178px] truncate`}>
@@ -1442,7 +1442,7 @@ const CustomDatePicker = ({ value, onChange, onToggle }: { value: string, onChan
                 <button 
                   key={day} 
                   onClick={() => handleSelectDay(day)} 
-                  className={`h-7 w-7 text-[10px] font-black rounded-lg transition-all flex items-center justify-center
+                  className={`h-7 w-7 text-[9px] font-black rounded-lg transition-all flex items-center justify-center
                     ${isSelected ? 'bg-sky-500 text-white shadow-md scale-110 z-10' : isToday ? 'text-sky-500 border border-sky-500/30' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}
                   `}
                 >
