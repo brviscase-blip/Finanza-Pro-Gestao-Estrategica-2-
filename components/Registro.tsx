@@ -19,7 +19,7 @@ interface CategoryCardProps {
   displayTitle: string;
   themeCategory: CategoryType | 'FIXA' | 'VARIÁVEL' | 'PASSIVOS';
   items: (FinancialItem & { category: CategoryType })[];
-  onAdd: () => void;
+  onAdd?: () => void;
   onRequestRemove: (category: CategoryType, id: string, name: string) => void;
   onUpdate: (category: CategoryType, id: string, field: keyof FinancialItem, value: any) => void;
   onReactivate: (id: string) => void;
@@ -59,13 +59,11 @@ const DebtTypeSelector: React.FC<{ category: CategoryType, value?: DebtType, onC
     { label: 'VARIÁVEL', value: 'GASTOS VARIÁVEIS' as DebtType, color: 'border-amber-500/30 text-amber-600' }
   ];
 
-  // Filtra as opções: DÍVIDAS mostra tudo. Demais categorias mostram apenas FIXA.
   const options = allOptions.filter(opt => {
     if (category === 'DÍVIDAS') return true;
     return opt.value === 'DESPESAS FIXAS';
   });
 
-  // Fallback para o tipo padrão baseado na categoria se o valor estiver ausente
   const defaultValue = category === 'DÍVIDAS' ? 'PASSIVOS' : 'DESPESAS FIXAS';
   const effectiveValue = value || defaultValue;
 
@@ -213,9 +211,11 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
                 <span className="text-[9px] font-black uppercase tracking-widest hidden lg:inline">Master</span>
               </button>
             )}
-            <button onClick={onAdd} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all group" title="Novo Lançamento">
-              <Plus className="w-3.5 h-3.5 transition-transform group-hover:scale-125" />
-            </button>
+            {!isDividas && onAdd && (
+              <button onClick={onAdd} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all group" title="Novo Lançamento">
+                <Plus className="w-3.5 h-3.5 transition-transform group-hover:scale-125" />
+              </button>
+            )}
             {!isExpanded && onExpand && (<button onClick={onExpand} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all group" title="Expandir"><Maximize2 className="w-3.5 h-3.5" /></button>)}
           </div>
         </div>
@@ -296,10 +296,18 @@ const Registro: React.FC<RegistroProps> = ({
   const [isLinkingMaster, setIsLinkingMaster] = useState(false);
   const [editingInstallments, setEditingInstallments] = useState<{ cat: CategoryType, id: string } | null>(null);
   const [viewStatus, setViewStatus] = useState<'ABERTO' | 'QUITADO' | 'CANCELADO'>('ABERTO');
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const addMenuRef = useRef<HTMLDivElement>(null);
   
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => { if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) setIsAddMenuOpen(false); };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
 
   const isItemQuitado = (item: FinancialItem, category: string): boolean => {
     if (item.masterDebtId) {
@@ -352,30 +360,31 @@ const Registro: React.FC<RegistroProps> = ({
           id: 'DESPESAS FIXAS', 
           label: 'FIXA', 
           themeCategory: 'FIXA' as const, 
-          items: filterByStatus(getItemsByType('DESPESAS FIXAS')), 
-          onAdd: () => handleAddItem('ESSENCIAIS') 
+          items: filterByStatus(getItemsByType('DESPESAS FIXAS')),
+          onAdd: () => handleAddItem('ESSENCIAIS')
         },
         { 
           id: 'GASTOS VARIÁVEIS', 
           label: 'VARIÁVEL', 
           themeCategory: 'VARIÁVEL' as const, 
-          items: filterByStatus(getItemsByType('GASTOS VARIÁVEIS')), 
-          onAdd: () => handleAddItem('QUALIDADE DE VIDA') 
+          items: filterByStatus(getItemsByType('GASTOS VARIÁVEIS')),
+          onAdd: () => handleAddItem('QUALIDADE DE VIDA')
         },
         { 
           id: 'PASSIVOS', 
           label: 'PASSIVOS', 
           themeCategory: 'PASSIVOS' as const, 
-          items: filterByStatus(getItemsByType('PASSIVOS')), 
-          onAdd: () => handleAddItem('DÍVIDAS') 
+          items: filterByStatus(getItemsByType('PASSIVOS')),
+          // DÍVIDAS card doesn't have onAdd as per user request to prevent direct add
+          onAdd: undefined
         },
         { 
           id: 'EMPTY', 
           label: 'RESERVA', 
           themeCategory: 'ESSENCIAIS' as const, 
           items: [], 
-          onAdd: () => {}, 
-          isEmpty: true 
+          isEmpty: true,
+          onAdd: undefined
         }
       ];
     }
@@ -426,6 +435,7 @@ const Registro: React.FC<RegistroProps> = ({
       }
     };
     setData(prev => ({ ...prev, [category]: [...(prev[category] || []), newItem] }));
+    setIsAddMenuOpen(false);
   };
 
   const handleUpdateItem = (category: CategoryType, id: string, field: keyof FinancialItem, value: any) => {
@@ -488,14 +498,12 @@ const Registro: React.FC<RegistroProps> = ({
     setTagToRemove(null);
   };
 
-  // Lógica para vincular dívida master que estava ausente
   const handleLinkMasterDebt = (debt: MasterDebt) => {
     console.log('[DEBUG] Processando vínculo da dívida master:', debt.item);
     
     const newItem: FinancialItem = {
       id: crypto.randomUUID(),
       item: debt.item,
-      // O valor base para o inventário é o valor total dividido pelas parcelas
       value: debt.totalValue / debt.installmentsCount,
       subCategory: debt.subCategory || '-',
       subCategoryColor: debt.subCategoryColor,
@@ -564,6 +572,29 @@ const Registro: React.FC<RegistroProps> = ({
               <div className="hidden sm:block">
                 <div className="flex items-center gap-1.5 mb-0.5"><span className="h-0.5 w-2.5 bg-slate-900 dark:bg-white rounded-full"></span><span className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-700 dark:text-slate-50">Ativos {activeYear}</span></div>
                 <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white uppercase leading-none">Inventário Patrimonial</h2>
+              </div>
+              <div className="relative" ref={addMenuRef}>
+                <button 
+                  onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-all ml-2"
+                >
+                  <Plus className="w-4 h-4" /> Novo Item
+                </button>
+                {isAddMenuOpen && (
+                  <div className="absolute top-full left-2 mt-2 w-48 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl z-[1500] p-1.5 animate-in fade-in zoom-in-95 duration-200">
+                    <span className="block px-3 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 mb-1">Selecionar Destino</span>
+                    {CATEGORIES.map(cat => (
+                      <button 
+                        key={cat} 
+                        onClick={() => handleAddItem(cat)}
+                        className="w-full px-3 py-2 text-left text-[10px] font-black uppercase rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-slate-700 dark:text-slate-200 flex items-center gap-2"
+                      >
+                        <div className={`w-1.5 h-1.5 rounded-full ${cat === 'ESSENCIAIS' ? 'bg-emerald-500' : cat === 'QUALIDADE DE VIDA' ? 'bg-sky-500' : cat === 'FUTURO' ? 'bg-rose-500' : 'bg-violet-500'}`} />
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex-grow grid grid-cols-2 md:grid-cols-4 gap-4 px-4">
