@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Plus, Trash2, Calendar, TrendingUp, ArrowUpCircle, ArrowDownCircle, Clock, Calculator, StickyNote, ChevronLeft, ChevronRight, ShieldCheck, Hash, FileText, Settings2, History, Check, X, Info, Zap, AlertCircle, Layers, Palette, ArrowUpDown, ArrowUp, ArrowDown, Target, Lightbulb, Map, ArrowRightLeft, Lock, Edit3, Save, Table, Layout, CheckCircle2, ChevronDown, Type, DollarSign, CalendarRange, CalendarDays, ChevronUp, PanelLeftClose, PanelLeftOpen, Maximize2, Minimize2, AlertTriangle, Ban, Flame, ShieldAlert, Percent, ListFilter, Undo2, SlidersHorizontal, CalendarCheck, Filter, RotateCcw, Search, Tag } from 'lucide-react';
 import { MonthlyEntry, IncomeEntry, PaymentStatus, CategoryType, FinancialItem, ItemOverride, StrategyBlock, StrategyTableColumn, StrategyQuestion, TableColumnType, MasterDebt, YearProfile, FrequencyConfig, DebtType } from '../types';
@@ -194,8 +195,14 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
 
   const totals = useMemo(() => {
     const inflow = currentMonthIncomes.reduce((acc, curr) => acc + curr.value, 0);
-    const outflowPlanned = currentMonthEntries.reduce((acc, curr) => acc + curr.estimatedValue, 0);
+    
+    // ATUALIZAÇÃO SOLICITADA: Itens com status 'Não Pago' não são debitados da Margem Estratégica
+    const outflowPlanned = currentMonthEntries
+      .filter(e => e.status !== 'Não Pago')
+      .reduce((acc, curr) => acc + curr.estimatedValue, 0);
+      
     const outflowPaid = currentMonthEntries.filter(e => e.status === 'Pago').reduce((acc, curr) => acc + (curr.paidValue || curr.estimatedValue), 0);
+    
     return { inflow, outflowPlanned, outflowPaid, strategyBalance: inflow - outflowPlanned, currentBalance: inflow - outflowPaid };
   }, [currentMonthEntries, currentMonthIncomes]);
 

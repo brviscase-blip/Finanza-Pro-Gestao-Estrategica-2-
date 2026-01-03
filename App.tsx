@@ -323,24 +323,23 @@ const App: React.FC = () => {
               
               const existing = (profile.monthlyEntries || []).find(e => e.itemId === ri.id && e.installmentIndex === instIdx);
               
-              // Lógica de Sincronização de Status Preservativa
-              let syncStatus: PaymentStatus = existing ? existing.status : 'Pendente';
-              let syncPaymentDate = existing ? existing.paymentDate : '';
-              let syncPaidValue = existing ? existing.paidValue : 0;
+              // Lógica Preservativa de Status para Dívidas Master
+              let syncStatus: PaymentStatus = 'Pendente';
+              let syncPaymentDate = '';
+              let syncPaidValue = 0;
 
               if (inst.status === 'paid') {
                 syncStatus = 'Pago';
                 syncPaymentDate = inst.paidDate || '';
                 syncPaidValue = inst.value;
-              } else if (syncStatus === 'Pago') {
-                // Se no master não está pago mas no fluxo estava como pago, resetar para pendente
-                // Isso permite que se a parcela for "estornada" no master, ela volte a ficar pendente no fluxo
-                syncStatus = 'Pendente';
-                syncPaymentDate = '';
-                syncPaidValue = 0;
+              } else if (existing) {
+                // Se no Master não está pago, preservamos a escolha tática feita no Fluxo (PLAN, NÃO, etc)
+                // Apenas se o status no Fluxo for 'Pago' e no Master não, forçamos o reset para 'Pendente' 
+                // (pois o Master é a verdade absoluta de liquidação)
+                syncStatus = existing.status === 'Pago' ? 'Pendente' : existing.status;
+                syncPaymentDate = syncStatus === 'Pago' ? existing.paymentDate : '';
+                syncPaidValue = syncStatus === 'Pago' ? existing.paidValue : 0;
               }
-              // NOTA: Se inst.status === 'pending' e syncStatus for 'Planejado', 'Atrasado' ou 'Não Pago', 
-              // nós MANTEMOS o status tático do Fluxo.
 
               if (existing) {
                 validEntriesMap.set(key, {
