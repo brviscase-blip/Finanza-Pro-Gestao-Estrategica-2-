@@ -308,7 +308,6 @@ const App: React.FC = () => {
         if (!ri.item || ri.item.trim() === '') return;
         if (ri.isCancelled && ri.cancelledYear !== undefined && (year > ri.cancelledYear || (year === ri.cancelledYear && m >= ri.cancelledMonth!))) return;
 
-        // Fallback robusto para garantir que debtType seja coerente com a categoria se não definido
         const effectiveDebtType = ri.debtType || (ri.category === 'DÍVIDAS' ? 'PASSIVOS' : 'DESPESAS FIXAS');
 
         if (ri.masterDebtId) {
@@ -321,17 +320,27 @@ const App: React.FC = () => {
               const instIdx = master.installments.indexOf(inst);
               const key = `${ri.id}-${year}-${m}-${instIdx}`;
               const instStr = `${String(inst.number).padStart(2, '0')}/${String(master.installmentsCount).padStart(2, '0')}`;
-              let syncStatus: PaymentStatus = 'Pendente';
-              let syncPaymentDate = '';
-              let syncPaidValue = 0;
+              
+              const existing = (profile.monthlyEntries || []).find(e => e.itemId === ri.id && e.installmentIndex === instIdx);
+              
+              // Lógica de Sincronização de Status Preservativa
+              let syncStatus: PaymentStatus = existing ? existing.status : 'Pendente';
+              let syncPaymentDate = existing ? existing.paymentDate : '';
+              let syncPaidValue = existing ? existing.paidValue : 0;
 
               if (inst.status === 'paid') {
                 syncStatus = 'Pago';
                 syncPaymentDate = inst.paidDate || '';
                 syncPaidValue = inst.value;
+              } else if (syncStatus === 'Pago') {
+                // Se no master não está pago mas no fluxo estava como pago, resetar para pendente
+                // Isso permite que se a parcela for "estornada" no master, ela volte a ficar pendente no fluxo
+                syncStatus = 'Pendente';
+                syncPaymentDate = '';
+                syncPaidValue = 0;
               }
-
-              const existing = (profile.monthlyEntries || []).find(e => e.itemId === ri.id && e.installmentIndex === instIdx);
+              // NOTA: Se inst.status === 'pending' e syncStatus for 'Planejado', 'Atrasado' ou 'Não Pago', 
+              // nós MANTEMOS o status tático do Fluxo.
 
               if (existing) {
                 validEntriesMap.set(key, {
@@ -358,7 +367,6 @@ const App: React.FC = () => {
             });
           }
         } else {
-          // Lógica recorrente normal
           let shouldInclude = false;
           let diffMonths = 0;
           
@@ -392,7 +400,6 @@ const App: React.FC = () => {
               const finalDay = Math.min(preferredDay, lastDay);
               const dueDate = `${year}-${String(m).padStart(2, '0')}-${String(finalDay).padStart(2, '0')}`;
               
-              // Localiza entrada existente para preservar dados táticos
               const existing = (profile.monthlyEntries || []).find(e => 
                 e.itemId === ri.id && e.month === m && e.year === year && (qIndex ? e.quinzenaIndex === qIndex : true)
               );
