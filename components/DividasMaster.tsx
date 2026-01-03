@@ -767,8 +767,7 @@ const DebtMasterModal: React.FC<{ initialData: MasterDebt | null, masterDebts: M
                )}
                <div className="p-6 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2rem] space-y-5">
                   <div className="flex items-center gap-2 mb-2"><CheckCircle2 className="w-4 h-4 text-sky-500" /><h3 className="text-[10px] font-black text-sky-500 uppercase tracking-widest">Cenário Acordado</h3></div>
-                  <div className="grid grid-cols-2 gap-4">
-                     <div><label className="block text-[9px] font-black text-slate-400 uppercase mb-1.5">Dia Venc.</label><input type="number" value={dueDay} onChange={(e) => setDueDay(e.target.value)} className="w-full h-10 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-black outline-none text-center text-slate-900 dark:text-white" /></div>
+                  <div className="grid grid-cols-1 gap-4">
                      <div><label className="block text-[9px] font-black text-slate-400 uppercase mb-1.5">Parcelas</label><input type="number" value={installmentsCount} onChange={(e) => setInstallmentsCount(e.target.value)} className="w-full h-10 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-black outline-none text-center text-slate-900 dark:text-white" /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
