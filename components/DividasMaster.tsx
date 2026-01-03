@@ -1,6 +1,5 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, Trash2, Landmark, DollarSign, Calendar, CalendarDays, Hash, Tag, X, Edit3, CheckCircle2, AlertCircle, Info, ChevronLeft, ChevronRight, Save, Calculator, PieChart, ShieldCheck, Clock, FileText, LayoutGrid, List, AlertTriangle, History, ArrowRight, ArrowDownCircle, Percent, Undo2, Link2, ChevronDown, ShieldAlert, RefreshCw, Copy, ClipboardCheck, Award, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Landmark, DollarSign, Calendar, CalendarDays, Hash, Tag, X, Edit3, CheckCircle2, AlertCircle, Info, ChevronLeft, ChevronRight, Save, Calculator, PieChart, ShieldCheck, Clock, FileText, LayoutGrid, List, AlertTriangle, History, ArrowRight, ArrowDownCircle, Percent, Undo2, Link2, ChevronDown, ShieldAlert, RefreshCw, Copy, ClipboardCheck, Award, Sparkles, Link as LinkIcon } from 'lucide-react';
 import { MasterDebt, MasterDebtInstallment, MonthlyEntry } from '../types';
 
 const formatCurrency = (val: number) => {
@@ -250,9 +249,10 @@ interface DividasMasterProps {
   masterDebts: MasterDebt[];
   setMasterDebts: React.Dispatch<React.SetStateAction<MasterDebt[]>>;
   allEntries: MonthlyEntry[];
+  linkedMasterDebtIds: string[];
 }
 
-const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDebts, allEntries }) => {
+const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDebts, allEntries, linkedMasterDebtIds }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDebt, setEditingDebt] = useState<MasterDebt | null>(null);
   const [debtToDelete, setDebtToDelete] = useState<MasterDebt | null>(null);
@@ -261,7 +261,6 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
   const stats = useMemo(() => {
     const safeDebts = masterDebts || [];
     
-    // Cálculo robusto derivado das parcelas reais para garantir integridade
     const totals = safeDebts.reduce((acc, curr) => {
       const installmentsTotal = (curr.installments || []).reduce((sum, inst) => sum + (Number(inst.value) || 0), 0);
       const currentDebtTotal = installmentsTotal + (Number(curr.downPayment) || 0);
@@ -327,7 +326,14 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
         ) : viewMode === 'cards' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
             {masterDebts.map(debt => (
-              <DebtCard key={debt.id} debt={debt} onDelete={() => setDebtToDelete(debt)} onEdit={() => { setEditingDebt(debt); setIsModalOpen(true); }} allEntries={allEntries} />
+              <DebtCard 
+                key={debt.id} 
+                debt={debt} 
+                onDelete={() => setDebtToDelete(debt)} 
+                onEdit={() => { setEditingDebt(debt); setIsModalOpen(true); }} 
+                allEntries={allEntries} 
+                isLinked={linkedMasterDebtIds.includes(debt.id)}
+              />
             ))}
           </div>
         ) : (
@@ -350,7 +356,8 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
                      const remainingValue = (debt.installments || []).filter(i => i.status === 'pending').reduce((sum, inst) => sum + (Number(inst.value) || 0), 0);
                      const paidCount = (debt.installments || []).filter(i => i.status === 'paid').length;
                      const progress = (paidCount / (debt.installmentsCount || 1)) * 100;
-                     
+                     const isLinked = linkedMasterDebtIds.includes(debt.id);
+
                      return (
                        <tr key={debt.id} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors group">
                           <td className="px-6 py-4">
@@ -368,6 +375,8 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
                              <div className="flex items-center">
                                {debt.status === 'paid' ? (
                                  <span className="flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase border-2 border-emerald-500/20 shadow-sm animate-pulse"><Sparkles className="w-3 h-3" /> QUITADO</span>
+                               ) : !isLinked ? (
+                                 <span className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-500/10 text-slate-500 text-[8px] font-black uppercase border border-slate-500/20 opacity-60" title="Item ausente no Inventário do Registro"><LinkIcon className="w-2.5 h-2.5" /> Aguardando Vínculo</span>
                                ) : debt.isNegotiation ? (
                                  <span className="flex items-center gap-1.5 px-2 py-1 rounded bg-amber-500/10 text-amber-600 text-[9px] font-black uppercase border border-amber-500/20"><Percent className="w-3 h-3" /> Negociada</span>
                                ) : (
@@ -506,12 +515,11 @@ const StatCard: React.FC<{ icon: any, label: string, value: string, color: strin
   </div>
 );
 
-const DebtCard: React.FC<{ debt: MasterDebt, onDelete: () => void, onEdit: () => void, allEntries: MonthlyEntry[] }> = ({ debt, onDelete, onEdit, allEntries }) => {
+const DebtCard: React.FC<{ debt: MasterDebt, onDelete: () => void, onEdit: () => void, allEntries: MonthlyEntry[], isLinked: boolean }> = ({ debt, onDelete, onEdit, allEntries, isLinked }) => {
   const paidCount = (debt.installments || []).filter(i => i.status === 'paid').length;
   const progress = (paidCount / (debt.installmentsCount || 1)) * 100;
   const isQuitado = progress === 100;
   
-  // Sincronização de Lógica com o Modal: Cálculo derivado das parcelas reais
   const paidValue = useMemo(() => {
     const installmentsSum = (debt.installments || [])
       .filter(i => i.status === 'paid')
@@ -553,6 +561,18 @@ const DebtCard: React.FC<{ debt: MasterDebt, onDelete: () => void, onEdit: () =>
       </div>
 
       <div className="p-5 flex-grow flex flex-col gap-4 relative z-10">
+        <div className="flex items-center">
+           {isQuitado ? (
+             <span className="flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase border-2 border-emerald-500/20 shadow-sm"><Sparkles className="w-3 h-3" /> QUITADO</span>
+           ) : !isLinked ? (
+             <span className="flex items-center gap-1.5 px-3 py-1 rounded bg-slate-500/10 text-slate-500 text-[9px] font-black uppercase border border-slate-500/20 opacity-60" title="Este item ainda não foi adicionado ao Inventário no Registro"><LinkIcon className="w-3 h-3" /> Aguardando Vínculo</span>
+           ) : debt.isNegotiation ? (
+             <span className="flex items-center gap-1.5 px-3 py-1 rounded bg-amber-500/10 text-amber-600 text-[9px] font-black uppercase border border-amber-500/20"><Percent className="w-3 h-3" /> Negociada</span>
+           ) : (
+             <span className="flex items-center gap-1.5 px-3 py-1 rounded bg-sky-500/10 text-sky-600 text-[9px] font-black uppercase border border-sky-500/20"><Clock className="w-3 h-3" /> Ativa</span>
+           )}
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div className={`p-3 rounded-xl border ${isQuitado ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/10'}`}>
              <span className="text-[7px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block mb-1">Valor Liquidado</span>

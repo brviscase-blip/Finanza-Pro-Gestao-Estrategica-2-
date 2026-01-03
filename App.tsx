@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { HashRouter as Router, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import { Home as HomeIcon, FileText, Sun, Moon, Briefcase, Table2, Pin, PinOff, LogOut, Settings2, ArrowRightLeft, Landmark, RefreshCw, Trophy } from 'lucide-react';
@@ -259,6 +258,7 @@ const App: React.FC = () => {
     } catch (e) { console.error('[SUPABASE] Erro Estratégias:', e); }
 
     const tags = (Object.entries(profile.customTags || {}) as [CategoryType, SubCategoryTag[]][]).flatMap(([cat, tgs]) => 
+      /* Fix: Map colorClass to classe_cor database column correctly using t.colorClass instead of t.classe_cor */
       (tgs || []).map(t => ({ perfil_ano_id: profileId, categoria: cat, nome: t.name, classe_cor: t.colorClass }))
     );
     if (tags.length > 0) await supabase.from('tags_customizadas').upsert(tags, { onConflict: 'perfil_ano_id,categoria,nome' });
@@ -323,7 +323,6 @@ const App: React.FC = () => {
               
               const existing = (profile.monthlyEntries || []).find(e => e.itemId === ri.id && e.installmentIndex === instIdx);
               
-              // Lógica Preservativa de Status para Dívidas Master
               let syncStatus: PaymentStatus = 'Pendente';
               let syncPaymentDate = '';
               let syncPaidValue = 0;
@@ -333,9 +332,6 @@ const App: React.FC = () => {
                 syncPaymentDate = inst.paidDate || '';
                 syncPaidValue = inst.value;
               } else if (existing) {
-                // Se no Master não está pago, preservamos a escolha tática feita no Fluxo (PLAN, NÃO, etc)
-                // Apenas se o status no Fluxo for 'Pago' e no Master não, forçamos o reset para 'Pendente' 
-                // (pois o Master é a verdade absoluta de liquidação)
                 syncStatus = existing.status === 'Pago' ? 'Pendente' : existing.status;
                 syncPaymentDate = syncStatus === 'Pago' ? existing.paymentDate : '';
                 syncPaidValue = syncStatus === 'Pago' ? existing.paidValue : 0;
@@ -468,6 +464,16 @@ const App: React.FC = () => {
   const currentProfile = activeYear !== null && profiles[activeYear] ? profiles[activeYear] : null;
   const allEntries = useMemo(() => Object.values(profiles).flatMap((p: YearProfile) => p.monthlyEntries || []), [profiles]);
 
+  // Cálculo de IDs de dívidas Master vinculadas ao registro atual
+  const linkedMasterDebtIds = useMemo(() => {
+    if (!currentProfile) return [];
+    /* Fix: Add explicit type casting to resolve 'unknown' inference error when accessing masterDebtId */
+    return (Object.values(currentProfile.financialData) as FinancialItem[][])
+      .flat()
+      .filter(i => !!i.masterDebtId)
+      .map(i => i.masterDebtId!);
+  }, [currentProfile]);
+
   return (
     <Router>
       <div className="min-h-screen flex flex-col bg-[#f4f7fa] dark:bg-slate-950 transition-colors duration-200">
@@ -532,7 +538,7 @@ const App: React.FC = () => {
         <main className="flex-grow w-full max-w-[1920px] mx-auto px-4 md:px-8 py-6 md:py-8">
           <Routes>
             <Route path="/" element={(activeYear && profiles[activeYear]) ? <Navigate to="/registro" replace /> : <Home profiles={profiles} setProfiles={setProfiles} activeYear={activeYear} setActiveYear={setActiveYear} />} />
-            <Route path="/dividas" element={<DividasMaster masterDebts={masterDebts} setMasterDebts={updateMasterDebts} allEntries={allEntries} />} />
+            <Route path="/dividas" element={<DividasMaster masterDebts={masterDebts} setMasterDebts={updateMasterDebts} allEntries={allEntries} linkedMasterDebtIds={linkedMasterDebtIds} />} />
             <Route path="/conquistas" element={<Conquistas conquistas={conquistas} setConquistas={updateConquistas} tags={conquistaTags} setTags={setConquistaTags} />} />
             {currentProfile ? (
               <>
