@@ -33,7 +33,6 @@ interface FluxoProps {
 }
 
 const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIncomeEntries, financialData, setFinancialData, activeYear, isHeaderPinned, strategyBlocks, setStrategyBlocks, masterDebts, setMasterDebts, allProfiles, setProfiles }) => {
-  // Inicialização com Memória Local
   const [activeMonth, setActiveMonth] = useState<number>(() => {
     const saved = localStorage.getItem('finanza-fluxo-active-month');
     return saved ? parseInt(saved) : new Date().getMonth() + 1;
@@ -49,7 +48,6 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
     return saved === 'true';
   });
 
-  // Estados de Filtro
   const [showFilters, setShowFilters] = useState(false);
   const [filterSearch, setFilterSearch] = useState('');
   const [filterCategories, setFilterCategories] = useState<Set<string>>(new Set());
@@ -72,10 +70,9 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
   ];
 
   const categoriesOptions = ['ESSENCIAIS', 'QUALIDADE DE VIDA', 'FUTURO', 'DÍVIDAS'];
-  const statusOptions = ['Pago', 'Pendente', 'Atrasado', 'Planejado', 'Não Pago', 'Agendado'];
+  const statusOptions = ['Pago', 'Pendente', 'Atrasado', 'Planejado', 'Não Pago', 'Nulo', 'Agendado'];
   const punctualityOptions = ['PONTUAL', 'ATRASADO', 'NO PRAZO', 'PRAZO'];
 
-  // Persistência de Estado UI
   useEffect(() => {
     localStorage.setItem('finanza-fluxo-active-month', activeMonth.toString());
     localStorage.setItem('finanza-fluxo-income-collapsed', String(isIncomeCollapsed));
@@ -109,6 +106,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
   };
 
   const getPontualidadeStatus = (entry: MonthlyEntry) => {
+    if (entry.status === 'Nulo') return null;
     if (!entry.dueDate || !entry.dueDate.includes('-')) return null;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -158,7 +156,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
         let valB: any;
         switch (sortConfig.key) {
           case 'status':
-            const statusOrder = { 'Não Pago': 5, 'Atrasado': 4, 'Pendente': 3, 'Planejado': 2, 'Agendado': 1.5, 'Pago': 1 };
+            const statusOrder = { 'Não Pago': 6, 'Atrasado': 5, 'Pendente': 4, 'Planejado': 3, 'Agendado': 2, 'Pago': 1, 'Nulo': 7 };
             valA = (statusOrder as any)[a.status] || 0;
             valB = (statusOrder as any)[b.status] || 0;
             break;
@@ -174,7 +172,6 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
     return filtered;
   }, [entries, activeYear, activeMonth, activeTab, sortConfig, allProfiles, filterSearch, filterCategories, filterSubCategories, filterStatus, filterPunctuality]);
 
-  // SEGREGAÇÃO DOS DADOS PARA OS CARDS
   const operationalEntries = useMemo(() => {
     return currentMonthEntries.filter(e => e.debtType !== 'GASTOS VARIÁVEIS');
   }, [currentMonthEntries]);
@@ -196,9 +193,9 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
   const totals = useMemo(() => {
     const inflow = currentMonthIncomes.reduce((acc, curr) => acc + curr.value, 0);
     
-    // ATUALIZAÇÃO SOLICITADA: Itens com status 'Não Pago' não são debitados da Margem Estratégica
+    // ATUALIZAÇÃO: Itens com status 'Não Pago' ou 'Nulo' não são debitados da Margem Estratégica
     const outflowPlanned = currentMonthEntries
-      .filter(e => e.status !== 'Não Pago')
+      .filter(e => e.status !== 'Não Pago' && e.status !== 'Nulo')
       .reduce((acc, curr) => acc + curr.estimatedValue, 0);
       
     const outflowPaid = currentMonthEntries.filter(e => e.status === 'Pago').reduce((acc, curr) => acc + (curr.paidValue || curr.estimatedValue), 0);
@@ -207,7 +204,7 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
   }, [currentMonthEntries, currentMonthIncomes]);
 
   const statusSummary = useMemo(() => {
-    const summary = { Pago: 0, Planejado: 0, Pendente: 0, 'Não Pago': 0 };
+    const summary = { Pago: 0, Planejado: 0, Pendente: 0, 'Não Pago': 0, Nulo: 0 };
     currentMonthEntries.forEach(e => { if (summary.hasOwnProperty(e.status)) summary[e.status as keyof typeof summary]++; });
     return summary;
   }, [currentMonthEntries]);
@@ -248,7 +245,6 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
 
     if (!entryToUpdate || sourceYear === null) return;
 
-    // Se o item for um gasto variável, não permitir atualização de status
     if (entryToUpdate.debtType === 'GASTOS VARIÁVEIS' && updates.status !== undefined && updates.status !== 'Pago') {
         return;
     }
@@ -352,7 +348,6 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
   };
 
   const togglePaymentStatus = (entry: MonthlyEntry) => {
-    // Bloquear alteração se for gasto variável
     if (entry.debtType === 'GASTOS VARIÁVEIS') return;
 
     let nextStatus: PaymentStatus;
@@ -360,7 +355,8 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
       case 'Pendente': nextStatus = 'Planejado'; break;
       case 'Planejado': nextStatus = 'Pago'; break;
       case 'Pago': nextStatus = 'Não Pago'; break;
-      case 'Não Pago': nextStatus = 'Pendente'; break;
+      case 'Não Pago': nextStatus = 'Nulo'; break;
+      case 'Nulo': nextStatus = 'Pendente'; break;
       default: nextStatus = 'Pendente';
     }
     
@@ -470,25 +466,25 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
     switch(status) {
       case 'Pago': return { icon: <ShieldCheck className="w-4 h-4" />, bgColor: 'bg-emerald-500', rowClass: 'bg-emerald-500/[0.05] dark:bg-emerald-500/[0.03]', textClass: 'text-emerald-700 dark:text-emerald-400 line-through opacity-60' };
       case 'Não Pago': return { icon: <AlertCircle className="w-4 h-4" />, bgColor: 'bg-rose-500', rowClass: 'bg-rose-500/[0.05] dark:bg-rose-500/[0.03]', textClass: 'text-rose-600 dark:text-rose-400 italic' };
+      case 'Nulo': return { icon: <Ban className="w-4 h-4" />, bgColor: 'bg-slate-400', rowClass: 'opacity-40 grayscale', textClass: 'text-slate-400 italic line-through' };
       case 'Planejado': return { icon: <Calendar className="w-4 h-4" />, bgColor: 'bg-sky-500', rowClass: 'bg-sky-500/[0.03] dark:bg-sky-500/[0.02]', textClass: 'text-slate-900 dark:text-white font-black' };
       default: return { icon: <Clock className="w-4 h-4" />, bgColor: 'bg-white dark:bg-slate-950', rowClass: '', textClass: 'text-slate-900 dark:text-white' };
     }
   };
 
-  // Grade calibrada rigorosamente para as porcentagens solicitadas (Distribuição fracional para ocupar 100%)
   const auditGridCols = "grid-cols-[5%_5%_5%_10%_10%_10%_5%_5%_5%_5%_10%_5%_10%]";
 
   const getDebtTypeLabel = (type?: DebtType) => {
     if (!type) return 'FIXA';
     if (type === 'DESPESAS FIXAS') return 'FIXA';
     if (type === 'GASTOS VARIÁVEIS') return 'VARIÁVEL';
-    return type; // 'PASSIVOS'
+    return type;
   };
 
   const handleAddVariableItem = (newItemData: any) => {
     const newEntry: MonthlyEntry = {
       id: crypto.randomUUID(),
-      itemId: crypto.randomUUID(), // Item isolado
+      itemId: crypto.randomUUID(),
       item: newItemData.item.toUpperCase(),
       year: activeYear,
       month: activeMonth,
@@ -496,10 +492,10 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
       subCategory: newItemData.subCategory,
       installments: '-',
       estimatedValue: newItemData.value,
-      paidValue: newItemData.value, // Valor pago preenchido
+      paidValue: newItemData.value,
       dueDate: newItemData.dueDate,
-      paymentDate: new Date().toISOString().split('T')[0], // Data de pagamento de hoje
-      status: 'Pago', // Status 'Pago' por padrão conforme solicitado
+      paymentDate: new Date().toISOString().split('T')[0],
+      status: 'Pago',
       group: newItemData.category,
       observation: newItemData.observation,
       order: 5,
@@ -604,12 +600,12 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                 <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 ml-4">
                   <button onClick={() => setActiveTab('mes')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'mes' ? 'bg-[#0F172A] text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}>Dívidas do Mês</button>
                   <button onClick={() => setActiveTab('atrasadas')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'atrasadas' ? 'bg-rose-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}>Não Pagas <span className="w-4 h-4 rounded-full bg-rose-500/20 text-[8px] flex items-center justify-center border border-rose-500/30">{Object.values(allProfiles || {}).flatMap((p: YearProfile) => (p.monthlyEntries || []).filter(e => (e.year < activeYear || (e.year === activeYear && e.month < activeMonth)) && e.status === 'Não Pago')).length}</span></button>
-                  <button onClick={() => setActiveTab('geral')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'geral' ? 'bg-[#0F172A] text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}>Geral</button>
+                  <button onClick={() => setActiveTab('geral')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'geral' ? 'bg-[#0F172A] text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}>Geral</button>
                 </div>
               </div>
 
               <div className="flex items-center bg-white/5 p-1 rounded-lg border border-white/5 shadow-inner">
-                {[['Pend', 'Pendente', 'slate-400'], ['Plan', 'Planejado', 'sky-400'], ['Pago', 'Pago', 'emerald-400'], ['Não', 'Não Pago', 'rose-400']].map(([lbl, st, color]) => (
+                {[['Pend', 'Pendente', 'slate-400'], ['Plan', 'Planejado', 'sky-400'], ['Pago', 'Pago', 'emerald-400'], ['Não', 'Não Pago', 'rose-400'], ['Nulo', 'Nulo', 'slate-300']].map(([lbl, st, color]) => (
                   <div key={lbl} className={`flex items-center px-2 border-r border-white/5 last:border-none gap-1.5 min-w-[75px] justify-center`}><span className={`text-[9px] font-black text-${color} uppercase tracking-widest`}>{lbl}</span><span className="text-[10px] font-black text-slate-900 dark:text-white tabular-nums">{statusSummary[st as keyof typeof statusSummary] || 0}</span></div>
                 ))}
               </div>
@@ -860,7 +856,6 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                     return (
                       <div key={entry.id} className={`grid ${auditGridCols} gap-2 px-4 py-1.5 items-center border-b border-slate-100 dark:border-slate-800 transition-all ${st.rowClass} relative`}>
                         <div className="flex justify-center">
-                          {/* BOTÃO DE STATUS BLOQUEADO PARA GASTOS VARIÁVEIS */}
                           <button 
                             className={`w-6 h-6 rounded flex items-center justify-center transition-all ${st.bgColor} text-white shadow-sm cursor-default opacity-100`}
                             title="Itens variáveis são registrados automaticamente como pagos"
@@ -868,7 +863,6 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                             {st.icon}
                           </button>
                         </div>
-                        {/* COLUNA ORDEM TRANSFORMADA EM CONTADOR (#) COM ESTILO PADRÃO ORDEM 5 */}
                         <div className="flex justify-center">
                           <div className="w-10 h-[24px] rounded-lg border flex items-center justify-center transition-all shadow-sm bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20 dark:border-slate-800">
                             <span className="text-[9px] font-black">{index + 1}</span>
@@ -907,7 +901,6 @@ const Fluxo: React.FC<FluxoProps> = ({ entries, setEntries, incomeEntries, setIn
                           </div>
                         </div>
 
-                        {/* DATA DE PAGAMENTO BLOQUEADA PARA VARIÁVEIS */}
                         <div className="flex justify-center relative">
                           <div className={`h-[24px] px-3 rounded-md border text-[9px] font-black flex items-center gap-2 transition-all w-full justify-center bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-sm cursor-default`}>
                             <CalendarDays className="w-3.5 h-3.5" /> 
@@ -1100,7 +1093,6 @@ const PersonalizationModal = ({ item, onClose, onSave, onCancelItem }: any) => {
   return (
     <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-300">
       <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] border-2 border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col">
-        {/* HEADER */}
         <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-[#0F172A] dark:bg-white rounded-2xl shadow-lg">
@@ -1116,7 +1108,6 @@ const PersonalizationModal = ({ item, onClose, onSave, onCancelItem }: any) => {
           </button>
         </div>
 
-        {/* TAB NAVIGATION */}
         <div className="flex items-center justify-center gap-2 p-4 bg-slate-50/50 dark:bg-slate-950/20 border-b border-slate-100 dark:border-slate-800">
           {steps.map((s) => (
             <button
@@ -1130,9 +1121,7 @@ const PersonalizationModal = ({ item, onClose, onSave, onCancelItem }: any) => {
           ))}
         </div>
 
-        {/* CONTENT AREA WITH ARROWS */}
         <div className="relative flex-grow flex items-center p-8 min-h-[340px]">
-          {/* LEFT ARROW */}
           {activeStep > 1 && (
             <button 
               onClick={prevStep}
@@ -1143,7 +1132,6 @@ const PersonalizationModal = ({ item, onClose, onSave, onCancelItem }: any) => {
           )}
 
           <div className="w-full animate-in slide-in-from-right-2 duration-300">
-            {/* STEP 1: VALOR */}
             {activeStep === 1 && (
               <div className="space-y-8">
                 <div className="space-y-3">
@@ -1164,7 +1152,6 @@ const PersonalizationModal = ({ item, onClose, onSave, onCancelItem }: any) => {
               </div>
             )}
 
-            {/* STEP 2: DATA */}
             {activeStep === 2 && (
               <div className="space-y-8">
                 <div className="space-y-3">
@@ -1177,7 +1164,6 @@ const PersonalizationModal = ({ item, onClose, onSave, onCancelItem }: any) => {
               </div>
             )}
 
-            {/* STEP 3: CANCELAR */}
             {activeStep === 3 && (
               <div className="space-y-6 flex flex-col items-center text-center py-4">
                 <div className="w-20 h-20 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center shadow-inner border border-rose-500/10">
@@ -1221,7 +1207,6 @@ const PersonalizationModal = ({ item, onClose, onSave, onCancelItem }: any) => {
             )}
           </div>
 
-          {/* RIGHT ARROW */}
           {activeStep < 3 && (
             <button 
               onClick={nextStep}
@@ -1232,7 +1217,6 @@ const PersonalizationModal = ({ item, onClose, onSave, onCancelItem }: any) => {
           )}
         </div>
 
-        {/* FOOTER */}
         <div className="p-8 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-800">
           {activeStep < 3 ? (
             <button 

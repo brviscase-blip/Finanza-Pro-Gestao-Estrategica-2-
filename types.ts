@@ -3,7 +3,7 @@ export type CategoryType = 'ESSENCIAIS' | 'QUALIDADE DE VIDA' | 'FUTURO' | 'DÍV
 
 export type FrequencyType = 'mensal' | 'quinzenal' | 'semanal' | 'trimestral' | 'semestral' | 'anual' | 'personalizado';
 
-export type PaymentStatus = 'Pago' | 'Pendente' | 'Atrasado' | 'Agendado' | 'Planejado' | 'Não Pago';
+export type PaymentStatus = 'Pago' | 'Pendente' | 'Atrasado' | 'Agendado' | 'Planejado' | 'Não Pago' | 'Nulo';
 
 export type DebtType = 'PASSIVOS' | 'DESPESAS FIXAS' | 'GASTOS VARIÁVEIS';
 

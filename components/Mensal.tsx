@@ -1,5 +1,6 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Filter, Trash2, Clock, Tag, Layers, DollarSign, CalendarDays, ChevronLeft, ChevronRight, Calendar as CalendarIcon, TrendingUp, ArrowDownCircle, ArrowUpCircle, RotateCcw, FileText, Hash, CheckCircle, Repeat, ShieldCheck, Flame, AlertTriangle, AlertCircle, Maximize2, Minimize2, TrendingDown } from 'lucide-react';
+import { Search, Filter, Trash2, Clock, Tag, Layers, DollarSign, CalendarDays, ChevronLeft, ChevronRight, Calendar as CalendarIcon, TrendingUp, ArrowDownCircle, ArrowUpCircle, RotateCcw, FileText, Hash, CheckCircle, Repeat, ShieldCheck, Flame, AlertTriangle, AlertCircle, Maximize2, Minimize2, TrendingDown, Ban } from 'lucide-react';
 import { MonthlyEntry, PaymentStatus, CategoryType, FinancialItem, FrequencyConfig, DebtType } from '../types';
 
 interface MensalProps {
@@ -11,7 +12,6 @@ interface MensalProps {
 }
 
 const Mensal: React.FC<MensalProps> = ({ entries, setEntries, financialData, isHeaderPinned, activeYear }) => {
-  // FUNÇÃO AUXILIAR PARA RECUPERAR ESTADO DO LOCALSTORAGE
   const getStoredFilter = (key: string, defaultValue: any) => {
     const saved = localStorage.getItem(`finanza-mensal-filter-${key}`);
     if (!saved) return defaultValue;
@@ -29,7 +29,6 @@ const Mensal: React.FC<MensalProps> = ({ entries, setEntries, financialData, isH
   const [activeMonth, setActiveMonth] = useState<number>(new Date().getMonth() + 1);
   const [collapsedMonths, setCollapsedMonths] = useState<Set<number>>(new Set());
   
-  // Estados de Filtro Avançado Persistentes
   const [filterMonths, setFilterMonths] = useState<Set<number>>(() => getStoredFilter('months', new Set()));
   const [filterCategories, setFilterCategories] = useState<Set<string>>(() => getStoredFilter('categories', new Set()));
   const [filterStatus, setFilterStatus] = useState<Set<PaymentStatus>>(() => getStoredFilter('status', new Set()));
@@ -45,7 +44,6 @@ const Mensal: React.FC<MensalProps> = ({ entries, setEntries, financialData, isH
   const [showFilters, setShowFilters] = useState(false);
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
 
-  // EFEITO PARA PERSISTIR FILTROS
   useEffect(() => {
     const filters = {
       search: searchTerm,
@@ -72,7 +70,7 @@ const Mensal: React.FC<MensalProps> = ({ entries, setEntries, financialData, isH
   ];
 
   const categories: CategoryType[] = ['ESSENCIAIS', 'QUALIDADE DE VIDA', 'FUTURO', 'DÍVIDAS'];
-  const statuses: PaymentStatus[] = ['Pago', 'Pendente', 'Atrasado', 'Planejado', 'Não Pago', 'Agendado'];
+  const statuses: PaymentStatus[] = ['Pago', 'Pendente', 'Atrasado', 'Planejado', 'Não Pago', 'Nulo', 'Agendado'];
   const freqOptions = ['MEN', 'SEM', 'QUI', 'TRI', 'ANU'];
   const pontualidadeOptions = ['PONTUAL', 'ATRASADO', 'NO PRAZO', 'PRAZO'];
 
@@ -87,6 +85,7 @@ const Mensal: React.FC<MensalProps> = ({ entries, setEntries, financialData, isH
   }, [financialData]);
 
   const getPontualidadeStatus = (entry: MonthlyEntry) => {
+    if (entry.status === 'Nulo') return null;
     if (!entry.dueDate || !entry.dueDate.includes('-')) return null;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -192,6 +191,7 @@ const Mensal: React.FC<MensalProps> = ({ entries, setEntries, financialData, isH
       case 'Atrasado': return <span className={`${base} bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 dark:border-rose-500/10`}><AlertCircle className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5" /> ATRASADO</span>;
       case 'Planejado': return <span className={`${base} bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20 dark:border-sky-500/10`}><CalendarIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5" /> PLANEJADO</span>;
       case 'Não Pago': return <span className={`${base} bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 dark:border-rose-500/10`}><RotateCcw className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5" /> NÃO PAGO</span>;
+      case 'Nulo': return <span className={`${base} bg-slate-100 text-slate-400 border-slate-200 dark:bg-slate-900 dark:border-slate-800`}><Ban className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5" /> NULO</span>;
       case 'Agendado': return <span className={`${base} bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20 dark:border-violet-500/10`}><Clock className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5" /> AGENDADO</span>;
       default: return <span className={`${base} bg-slate-100 text-slate-400 border-transparent`}>{status}</span>;
     }
@@ -201,10 +201,9 @@ const Mensal: React.FC<MensalProps> = ({ entries, setEntries, financialData, isH
     if (!type) return 'FIXA';
     if (type === 'DESPESAS FIXAS') return 'FIXA';
     if (type === 'GASTOS VARIÁVEIS') return 'VARIÁVEL';
-    return type; // 'PASSIVOS'
+    return type;
   };
 
-  // Grade refinada para o Mensal
   const gridTemplate = "grid-cols-[1.2fr_0.7fr_1fr_1.1fr_1.1fr_0.6fr_1.2fr_1fr_1fr_1fr_1fr]";
 
   const scrollToMonth = (month: number) => {
