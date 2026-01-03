@@ -341,6 +341,13 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
         </div>
         
         <button 
+          onClick={() => setStatusFilter('SEM_VINCULO')}
+          className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2 ${statusFilter === 'SEM_VINCULO' ? 'bg-slate-700 text-white border-transparent shadow-lg scale-105' : 'bg-white dark:bg-slate-900 text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-400'}`}
+        >
+          Sem Vínculo
+        </button>
+
+        <button 
           onClick={() => setStatusFilter('TUDO')}
           className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2 ${statusFilter === 'TUDO' ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] border-transparent shadow-lg scale-105' : 'bg-white dark:bg-slate-900 text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-400'}`}
         >
@@ -366,13 +373,6 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
           className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2 ${statusFilter === 'NEGOCIADA' ? 'bg-amber-600 text-white border-transparent shadow-lg scale-105' : 'bg-amber-500/5 text-amber-600 border-amber-500/20 hover:bg-amber-500/10'}`}
         >
           Negociadas
-        </button>
-
-        <button 
-          onClick={() => setStatusFilter('SEM_VINCULO')}
-          className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2 ${statusFilter === 'SEM_VINCULO' ? 'bg-slate-700 text-white border-transparent shadow-lg scale-105' : 'bg-slate-500/5 text-slate-500 border-slate-500/20 hover:bg-slate-500/10'}`}
-        >
-          Sem Vínculo
         </button>
 
         {statusFilter !== 'TUDO' && (
