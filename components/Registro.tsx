@@ -53,28 +53,36 @@ const DebtTypeSelector: React.FC<{ category: CategoryType, value?: DebtType, onC
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const options: { label: string, value: DebtType, color: string }[] = [
+  const allOptions: { label: string, value: DebtType, color: string }[] = [
     { label: 'PASSIVOS', value: 'PASSIVOS' as DebtType, color: 'border-violet-500/30 text-violet-600' },
     { label: 'FIXA', value: 'DESPESAS FIXAS' as DebtType, color: 'border-sky-500/30 text-sky-600' },
     { label: 'VARIÁVEL', value: 'GASTOS VARIÁVEIS' as DebtType, color: 'border-amber-500/30 text-amber-600' }
-  ].filter(opt => category === 'DÍVIDAS' ? true : opt.value !== 'PASSIVOS');
+  ];
+
+  // Filtra as opções: DÍVIDAS mostra tudo. Demais categorias mostram apenas FIXA.
+  const options = allOptions.filter(opt => {
+    if (category === 'DÍVIDAS') return true;
+    return opt.value === 'DESPESAS FIXAS';
+  });
 
   // Fallback para o tipo padrão baseado na categoria se o valor estiver ausente
   const defaultValue = category === 'DÍVIDAS' ? 'PASSIVOS' : 'DESPESAS FIXAS';
   const effectiveValue = value || defaultValue;
 
-  const current = options.find(o => o.value === effectiveValue) || { label: 'SELECIONE', color: 'border-slate-200 dark:border-slate-800 text-slate-400' };
+  const current = options.find(o => o.value === effectiveValue) || options[0] || { label: 'FIXA', color: 'border-sky-500/30 text-sky-600' };
+  const isSingleOption = options.length <= 1;
 
   return (
     <div className={`relative w-full ${disabled ? 'opacity-60 pointer-events-none' : ''}`} ref={containerRef}>
       <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between px-2 h-[26px] bg-white dark:bg-slate-950 border rounded shadow-sm transition-all hover:brightness-95 active:scale-95 ${isOpen ? 'ring-2 ring-sky-500/20 border-sky-500' : current.color}`}
+        onClick={() => !isSingleOption && setIsOpen(!isOpen)}
+        disabled={disabled || isSingleOption}
+        className={`w-full flex items-center justify-between px-2 h-[26px] bg-white dark:bg-slate-950 border rounded shadow-sm transition-all ${isSingleOption ? 'cursor-default' : 'hover:brightness-95 active:scale-95'} ${isOpen ? 'ring-2 ring-sky-500/20 border-sky-500' : current.color}`}
       >
         <span className="text-[9px] font-black uppercase truncate tracking-tighter">{current.label}</span>
-        <ChevronDown className={`w-2.5 h-2.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        {!isSingleOption && <ChevronDown className={`w-2.5 h-2.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />}
       </button>
-      {isOpen && (
+      {isOpen && !isSingleOption && (
         <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-lg shadow-2xl z-[100] p-1 space-y-0.5 animate-in fade-in zoom-in-95 duration-200">
           {options.map(opt => (
             <button
