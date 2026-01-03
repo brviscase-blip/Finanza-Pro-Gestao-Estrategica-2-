@@ -851,8 +851,8 @@ const DebtMasterModal: React.FC<{ initialData: MasterDebt | null, masterDebts: M
           </div>
         </div>
 
-        <div className="px-12 py-8 bg-slate-50 dark:bg-white/[0.01] border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-          <button onClick={onClose} className="px-10 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-rose-500 transition-colors uppercase">Descartar Auditoria</button>
+        <div className="px-12 py-8 bg-slate-50 dark:bg-white/[0.01] border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-4 shrink-0">
+          <button onClick={onClose} className="px-10 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-rose-500 transition-colors uppercase">CANCELAR</button>
           <button disabled={!item || isDuplicate} onClick={handleSubmit} className="px-16 py-5 bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-2xl hover:scale-[1.02] transition-all disabled:opacity-30 flex items-center gap-4"><Save className="w-5 h-5" /> SALVAR</button>
         </div>
       </div>
