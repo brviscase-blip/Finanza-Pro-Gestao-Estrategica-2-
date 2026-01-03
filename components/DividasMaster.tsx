@@ -259,8 +259,25 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
   const [viewMode, setViewMode] = useState<'cards' | 'ledger'>('cards');
   const [statusFilter, setStatusFilter] = useState<'TUDO' | 'ATIVA' | 'QUITADA' | 'NEGOCIADA' | 'SEM_VINCULO'>('TUDO');
 
+  // Lógica de Filtragem (Movida para cima para alimentar o stats)
+  const filteredDebts = useMemo(() => {
+    if (statusFilter === 'TUDO') return masterDebts;
+    return masterDebts.filter(debt => {
+      const isLinked = linkedMasterDebtIds.includes(debt.id);
+      const paidCount = (debt.installments || []).filter(i => i.status === 'paid').length;
+      const isQuitada = (paidCount / (debt.installmentsCount || 1)) * 100 === 100;
+
+      if (statusFilter === 'SEM_VINCULO') return !isLinked;
+      if (statusFilter === 'QUITADA') return isQuitada;
+      if (statusFilter === 'NEGOCIADA') return debt.isNegotiation && !isQuitada;
+      if (statusFilter === 'ATIVA') return !debt.isNegotiation && !isQuitada && isLinked;
+      return true;
+    });
+  }, [masterDebts, statusFilter, linkedMasterDebtIds]);
+
+  // Estatísticas Dinâmicas baseadas no filtro atual
   const stats = useMemo(() => {
-    const safeDebts = masterDebts || [];
+    const safeDebts = filteredDebts || [];
     
     const totals = safeDebts.reduce((acc, curr) => {
       const installmentsTotal = (curr.installments || []).reduce((sum, inst) => sum + (Number(inst.value) || 0), 0);
@@ -283,22 +300,7 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
     }, { total: 0, paid: 0, pending: 0 });
 
     return { ...totals, count: safeDebts.length };
-  }, [masterDebts]);
-
-  const filteredDebts = useMemo(() => {
-    if (statusFilter === 'TUDO') return masterDebts;
-    return masterDebts.filter(debt => {
-      const isLinked = linkedMasterDebtIds.includes(debt.id);
-      const paidCount = (debt.installments || []).filter(i => i.status === 'paid').length;
-      const isQuitada = (paidCount / (debt.installmentsCount || 1)) * 100 === 100;
-
-      if (statusFilter === 'SEM_VINCULO') return !isLinked;
-      if (statusFilter === 'QUITADA') return isQuitada;
-      if (statusFilter === 'NEGOCIADA') return debt.isNegotiation && !isQuitada;
-      if (statusFilter === 'ATIVA') return !debt.isNegotiation && !isQuitada && isLinked;
-      return true;
-    });
-  }, [masterDebts, statusFilter, linkedMasterDebtIds]);
+  }, [filteredDebts]);
 
   const handleSave = (debt: MasterDebt) => {
     setMasterDebts(prev => {

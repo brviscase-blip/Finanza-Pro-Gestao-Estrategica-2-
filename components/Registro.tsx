@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Plus, Trash2, Home, Heart, Rocket, CreditCard, TrendingUp, Layers, Settings2, X, Tag as TagIcon, ChevronDown, Check, Maximize2, AlertTriangle, Hash, CalendarDays, FileText, ChevronUp, Info, Zap, CalendarRange, Clock, Edit2, Lock, Ban, Landmark, ArrowRight, Percent, SlidersHorizontal, Calculator, Undo2, ShieldAlert, RefreshCw, LayoutGrid, ListFilter } from 'lucide-react';
 import { CategoryType, FinancialItem, FrequencyConfig, FrequencyType, SubCategoryTag, MonthlyEntry, MasterDebt, DebtType } from '../types';
 import { CATEGORIES } from '../constants';
@@ -60,7 +59,11 @@ const DebtTypeSelector: React.FC<{ category: CategoryType, value?: DebtType, onC
     { label: 'VARIÁVEL', value: 'GASTOS VARIÁVEIS' as DebtType, color: 'border-amber-500/30 text-amber-600' }
   ].filter(opt => category === 'DÍVIDAS' ? true : opt.value !== 'PASSIVOS');
 
-  const current = options.find(o => o.value === value) || { label: 'SELECIONE', color: 'border-slate-200 dark:border-slate-800 text-slate-400' };
+  // Fallback para o tipo padrão baseado na categoria se o valor estiver ausente
+  const defaultValue = category === 'DÍVIDAS' ? 'PASSIVOS' : 'DESPESAS FIXAS';
+  const effectiveValue = value || defaultValue;
+
+  const current = options.find(o => o.value === effectiveValue) || { label: 'SELECIONE', color: 'border-slate-200 dark:border-slate-800 text-slate-400' };
 
   return (
     <div className={`relative w-full ${disabled ? 'opacity-60 pointer-events-none' : ''}`} ref={containerRef}>
@@ -121,7 +124,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
     switch (themeCategory) {
       case 'ESSENCIAIS': return { color: 'emerald', icon: Home, target: '55%', bg: 'bg-emerald-500/10 dark:bg-emerald-500/10', border: 'border-emerald-500/20 dark:border-emerald-500/20', text: 'text-emerald-600 dark:text-emerald-400' };
       case 'QUALIDADE DE VIDA': return { color: 'sky', icon: Heart, target: '25%', bg: 'bg-sky-500/10 dark:bg-sky-500/10', border: 'border-sky-500/20 dark:border-sky-500/20', text: 'text-sky-600 dark:text-sky-400' };
-      case 'FUTURO': return { color: 'rose', icon: Rocket, target: '20%', bg: 'bg-rose-500/10 dark:bg-rose-500/10', border: 'border-rose-500/20 dark:border-rose-500/20', text: 'text-rose-600 dark:text-rose-400' };
+      case 'FUTURO': return { color: 'rose', icon: Rocket, target: '20%', bg: 'bg-rose-500/10 dark:bg-rose-500/10', border: 'border-rose-500/20 dark:border-rose-500/10', text: 'text-rose-600 dark:text-rose-400' };
       case 'DÍVIDAS': return { color: 'violet', icon: CreditCard, target: '0%', bg: 'bg-violet-500/10 dark:bg-violet-500/10', border: 'border-violet-500/20 dark:border-violet-500/20', text: 'text-violet-600 dark:text-violet-400' };
       case 'FIXA': return { color: 'sky', icon: Layers, target: 'FIXA', bg: 'bg-sky-500/10 dark:bg-sky-500/10', border: 'border-sky-500/20 dark:border-sky-500/20', text: 'text-sky-600 dark:text-sky-400' };
       case 'VARIÁVEL': return { color: 'amber', icon: TrendingUp, target: 'VARIÁVEL', bg: 'bg-amber-500/10 dark:bg-amber-500/10', border: 'border-amber-500/20 dark:border-amber-500/20', text: 'text-amber-600 dark:text-amber-400' };
