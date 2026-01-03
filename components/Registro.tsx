@@ -296,18 +296,10 @@ const Registro: React.FC<RegistroProps> = ({
   const [isLinkingMaster, setIsLinkingMaster] = useState(false);
   const [editingInstallments, setEditingInstallments] = useState<{ cat: CategoryType, id: string } | null>(null);
   const [viewStatus, setViewStatus] = useState<'ABERTO' | 'QUITADO' | 'CANCELADO'>('ABERTO');
-  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
-  const addMenuRef = useRef<HTMLDivElement>(null);
   
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-
-  useEffect(() => {
-    const handleOutside = (e: MouseEvent) => { if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) setIsAddMenuOpen(false); };
-    document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, []);
 
   const isItemQuitado = (item: FinancialItem, category: string): boolean => {
     if (item.masterDebtId) {
@@ -345,7 +337,7 @@ const Registro: React.FC<RegistroProps> = ({
         label: cat,
         themeCategory: cat,
         items: filterByStatus((data[cat] || []).map(i => ({ ...i, category: cat }))),
-        onAdd: () => handleAddItem(cat)
+        onAdd: cat === 'DÍVIDAS' ? undefined : () => handleAddItem(cat)
       }));
     } else {
       const getItemsByType = (type: DebtType) => {
@@ -375,7 +367,6 @@ const Registro: React.FC<RegistroProps> = ({
           label: 'PASSIVOS', 
           themeCategory: 'PASSIVOS' as const, 
           items: filterByStatus(getItemsByType('PASSIVOS')),
-          // DÍVIDAS card doesn't have onAdd as per user request to prevent direct add
           onAdd: undefined
         },
         { 
@@ -435,7 +426,6 @@ const Registro: React.FC<RegistroProps> = ({
       }
     };
     setData(prev => ({ ...prev, [category]: [...(prev[category] || []), newItem] }));
-    setIsAddMenuOpen(false);
   };
 
   const handleUpdateItem = (category: CategoryType, id: string, field: keyof FinancialItem, value: any) => {
@@ -572,29 +562,6 @@ const Registro: React.FC<RegistroProps> = ({
               <div className="hidden sm:block">
                 <div className="flex items-center gap-1.5 mb-0.5"><span className="h-0.5 w-2.5 bg-slate-900 dark:bg-white rounded-full"></span><span className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-700 dark:text-slate-50">Ativos {activeYear}</span></div>
                 <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white uppercase leading-none">Inventário Patrimonial</h2>
-              </div>
-              <div className="relative" ref={addMenuRef}>
-                <button 
-                  onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-all ml-2"
-                >
-                  <Plus className="w-4 h-4" /> Novo Item
-                </button>
-                {isAddMenuOpen && (
-                  <div className="absolute top-full left-2 mt-2 w-48 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl z-[1500] p-1.5 animate-in fade-in zoom-in-95 duration-200">
-                    <span className="block px-3 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 mb-1">Selecionar Destino</span>
-                    {CATEGORIES.map(cat => (
-                      <button 
-                        key={cat} 
-                        onClick={() => handleAddItem(cat)}
-                        className="w-full px-3 py-2 text-left text-[10px] font-black uppercase rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-slate-700 dark:text-slate-200 flex items-center gap-2"
-                      >
-                        <div className={`w-1.5 h-1.5 rounded-full ${cat === 'ESSENCIAIS' ? 'bg-emerald-500' : cat === 'QUALIDADE DE VIDA' ? 'bg-sky-500' : cat === 'FUTURO' ? 'bg-rose-500' : 'bg-violet-500'}`} />
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
             <div className="flex-grow grid grid-cols-2 md:grid-cols-4 gap-4 px-4">
@@ -924,7 +891,7 @@ const FrequencyModal: React.FC<FrequencyModalProps> = ({ item, onClose, onSave, 
     <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
       <div className="bg-white dark:bg-slate-900 w-[900px] h-[580px] rounded-2xl border-2 border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-500">
         <div className="px-6 h-[64px] shrink-0 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900"><div className="flex items-center gap-4"><div className="p-2 bg-[#0F172A] dark:bg-white rounded-xl shadow-lg"><CalendarRange className="w-4 h-4 text-white dark:text-[#0F172A]" /></div><div><h2 className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-[0.2em] leading-none mb-1">Configurador Estratégico {activeYear}</h2><p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">Sincronização do Ciclo Temporal</p></div></div><button onClick={onClose} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-all"><X className="w-5 h-5" /></button></div>
-        <div className="flex-grow flex overflow-hidden"><div className="w-[315px] shrink-0 p-5 border-r border-slate-100 dark:border-slate-800 flex flex-col gap-8 overflow-y-auto custom-scrollbar bg-slate-50/20 dark:bg-slate-950/20"><div><label className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3"><Layers className="w-3 h-3" /> Tipo de Ciclo</label><div className="grid grid-cols-2 gap-1.5">{cycleOptions.map(opt => (<button key={opt} onClick={() => setDraft({...draft, type: opt, dueDay: opt === 'quinzenal' && (draft.dueDay || 0) > 15 ? 1 : draft.dueDay})} className={`h-9 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all border-2 ${draft.type === opt ? 'bg-[#0F172A] dark:bg-slate-200 text-white dark:text-slate-950 border-transparent shadow-md' : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'}`}>{opt}</button>))}</div></div><div><label className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3"><CalendarDays className="w-3 h-3" /> Mês de Início</label><div className="grid grid-cols-4 gap-1.5">{months.map((m, i) => (<button key={m} onClick={() => setDraft({...draft, startMonth: i + 1})} className={`h-8 rounded-lg text-[11px] font-black uppercase transition-all border-2 ${draft.startMonth === i + 1 ? 'bg-[#0F172A] dark:bg-slate-200 text-white dark:text-slate-950 border-transparent shadow-md' : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'}`}>{m}</button>))}</div></div></div><div className="flex-grow p-6 flex flex-col bg-white dark:bg-slate-900 overflow-hidden"><div className="flex items-center justify-between mb-3 shrink-0"><label className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest"><Clock className="w-3.5 h-3.5" /> Dia do Vencimento</label>{draft.type !== 'semanal' && (<span className="text-[11px] font-black text-slate-300 dark:text-slate-600 italic uppercase tracking-widest">Limite do mês: {daysInMonth} Dias</span>)}</div><div className="flex-grow bg-[#F8FAFC] dark:bg-slate-950/40 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-center mb-4 overflow-hidden shadow-inner">{draft.type === 'semanal' ? (<div className="grid grid-cols-7 gap-2.5 w-full max-w-[460px] justify-items-center">{weekDaysShort.map((day, idx) => (<div key={day} className="flex flex-col gap-1.5 items-center"><span className="text-[11px] font-black text-slate-400 dark:text-slate-50">{day}</span><button onClick={() => setDraft({...draft, weeklyDay: idx})} className={`w-12 h-12 rounded-xl flex items-center justify-center text-[12px] font-black border-2 transition-all ${draft.weeklyDay === idx ? 'bg-[#0F172A] dark:bg-slate-200 text-white dark:text-slate-950 border-transparent shadow-lg scale-105' : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600'}`}>{day.substring(0, 1)}</button></div>))}</div>) : (<div className="grid grid-cols-7 gap-1.5 w-full max-w-[380px] justify-items-center">{weekDaysShort.map(d => (<div key={d} className="text-center text-[11px] font-black text-slate-300 dark:text-slate-600 mb-1 uppercase tracking-widest w-full">{d}</div>))}{Array.from({ length: 31 }).map((_, i) => { 
+        <div className="flex-grow flex overflow-hidden"><div className="w-[315px] shrink-0 p-5 border-r border-slate-100 dark:border-slate-800 flex flex-col gap-8 overflow-y-auto custom-scrollbar bg-slate-50/20 dark:bg-slate-950/20"><div><label className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3"><Layers className="w-3 h-3" /> Tipo de Ciclo</label><div className="grid grid-cols-2 gap-1.5">{cycleOptions.map(opt => (<button key={opt} onClick={() => setDraft({...draft, type: opt, dueDay: opt === 'quinzenal' && (draft.dueDay || 0) > 15 ? 1 : draft.dueDay})} className={`h-9 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all border-2 ${draft.type === opt ? 'bg-[#0F172A] dark:bg-slate-200 text-white dark:text-slate-950 border-transparent shadow-md' : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'}`}>{opt}</button>))}</div></div><div><label className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3"><CalendarDays className="w-3 h-3" /> Mês de Início</label><div className="grid grid-cols-4 gap-1.5">{months.map((m, i) => (<button key={m} onClick={() => setDraft({...draft, startMonth: i + 1})} className={`h-8 rounded-lg text-[11px] font-black uppercase transition-all border-2 ${draft.startMonth === i + 1 ? 'bg-[#0F172A] dark:bg-slate-200 text-white dark:text-slate-950 border-transparent shadow-lg scale-105' : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'}`}>{m}</button>))}</div></div></div><div className="flex-grow p-6 flex flex-col bg-white dark:bg-slate-900 overflow-hidden"><div className="flex items-center justify-between mb-3 shrink-0"><label className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest"><Clock className="w-3.5 h-3.5" /> Dia do Vencimento</label>{draft.type !== 'semanal' && (<span className="text-[11px] font-black text-slate-300 dark:text-slate-600 italic uppercase tracking-widest">Limite do mês: {daysInMonth} Dias</span>)}</div><div className="flex-grow bg-[#F8FAFC] dark:bg-slate-950/40 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-center mb-4 overflow-hidden shadow-inner">{draft.type === 'semanal' ? (<div className="grid grid-cols-7 gap-2.5 w-full max-w-[460px] justify-items-center">{weekDaysShort.map((day, idx) => (<div key={day} className="flex flex-col gap-1.5 items-center"><span className="text-[11px] font-black text-slate-400 dark:text-slate-50">{day}</span><button onClick={() => setDraft({...draft, weeklyDay: idx})} className={`w-12 h-12 rounded-xl flex items-center justify-center text-[12px] font-black border-2 transition-all ${draft.weeklyDay === idx ? 'bg-[#0F172A] dark:bg-slate-200 text-white dark:text-slate-950 border-transparent shadow-lg scale-105' : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600'}`}>{day.substring(0, 1)}</button></div>))}</div>) : (<div className="grid grid-cols-7 gap-1.5 w-full max-w-[380px] justify-items-center">{weekDaysShort.map(d => (<div key={d} className="text-center text-[11px] font-black text-slate-300 dark:text-slate-600 mb-1 uppercase tracking-widest w-full">{d}</div>))}{Array.from({ length: 31 }).map((_, i) => { 
                   const day = i + 1; 
                   const isOutOfRange = day > daysInMonth; 
                   const isForbiddenQuinzenal = draft.type === 'quinzenal' && day > 15;
