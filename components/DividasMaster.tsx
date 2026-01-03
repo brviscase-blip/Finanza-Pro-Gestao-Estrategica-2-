@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, Trash2, Landmark, DollarSign, Calendar, CalendarDays, Hash, Tag, X, Edit3, CheckCircle2, AlertCircle, Info, ChevronLeft, ChevronRight, Save, Calculator, PieChart, ShieldCheck, Clock, FileText, LayoutGrid, List, AlertTriangle, History, ArrowRight, ArrowDownCircle, Percent, Undo2, Link2, ChevronDown, ShieldAlert, RefreshCw, Copy, ClipboardCheck, Award, Sparkles, Link as LinkIcon } from 'lucide-react';
+import { Plus, Trash2, Landmark, DollarSign, Calendar, CalendarDays, Hash, Tag, X, Edit3, CheckCircle2, AlertCircle, Info, ChevronLeft, ChevronRight, Save, Calculator, PieChart, ShieldCheck, Clock, FileText, LayoutGrid, List, AlertTriangle, History, ArrowRight, ArrowDownCircle, Percent, Undo2, Link2, ChevronDown, ShieldAlert, RefreshCw, Copy, ClipboardCheck, Award, Sparkles, Link as LinkIcon, Filter, FilterX } from 'lucide-react';
 import { MasterDebt, MasterDebtInstallment, MonthlyEntry } from '../types';
 
 const formatCurrency = (val: number) => {
@@ -257,6 +257,7 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
   const [editingDebt, setEditingDebt] = useState<MasterDebt | null>(null);
   const [debtToDelete, setDebtToDelete] = useState<MasterDebt | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'ledger'>('cards');
+  const [statusFilter, setStatusFilter] = useState<'TUDO' | 'ATIVA' | 'QUITADA' | 'NEGOCIADA' | 'SEM_VINCULO'>('TUDO');
 
   const stats = useMemo(() => {
     const safeDebts = masterDebts || [];
@@ -283,6 +284,21 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
 
     return { ...totals, count: safeDebts.length };
   }, [masterDebts]);
+
+  const filteredDebts = useMemo(() => {
+    if (statusFilter === 'TUDO') return masterDebts;
+    return masterDebts.filter(debt => {
+      const isLinked = linkedMasterDebtIds.includes(debt.id);
+      const paidCount = (debt.installments || []).filter(i => i.status === 'paid').length;
+      const isQuitada = (paidCount / (debt.installmentsCount || 1)) * 100 === 100;
+
+      if (statusFilter === 'SEM_VINCULO') return !isLinked;
+      if (statusFilter === 'QUITADA') return isQuitada;
+      if (statusFilter === 'NEGOCIADA') return debt.isNegotiation && !isQuitada;
+      if (statusFilter === 'ATIVA') return !debt.isNegotiation && !isQuitada && isLinked;
+      return true;
+    });
+  }, [masterDebts, statusFilter, linkedMasterDebtIds]);
 
   const handleSave = (debt: MasterDebt) => {
     setMasterDebts(prev => {
@@ -317,15 +333,68 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
         </div>
       </div>
 
+      {/* Barra de Filtros por Status */}
+      <div className="flex items-center gap-3 mb-6 overflow-x-auto custom-scrollbar pb-2 shrink-0">
+        <div className="flex items-center gap-2 px-3 py-1.5 border-r border-slate-200 dark:border-slate-800 mr-1">
+          <Filter className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Status:</span>
+        </div>
+        
+        <button 
+          onClick={() => setStatusFilter('TUDO')}
+          className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2 ${statusFilter === 'TUDO' ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] border-transparent shadow-lg scale-105' : 'bg-white dark:bg-slate-900 text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-400'}`}
+        >
+          Todas
+        </button>
+
+        <button 
+          onClick={() => setStatusFilter('ATIVA')}
+          className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2 ${statusFilter === 'ATIVA' ? 'bg-sky-600 text-white border-transparent shadow-lg scale-105' : 'bg-sky-500/5 text-sky-600 border-sky-500/20 hover:bg-sky-500/10'}`}
+        >
+          Ativas
+        </button>
+
+        <button 
+          onClick={() => setStatusFilter('QUITADA')}
+          className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2 ${statusFilter === 'QUITADA' ? 'bg-emerald-600 text-white border-transparent shadow-lg scale-105' : 'bg-emerald-500/5 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/10'}`}
+        >
+          Quitadas
+        </button>
+
+        <button 
+          onClick={() => setStatusFilter('NEGOCIADA')}
+          className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2 ${statusFilter === 'NEGOCIADA' ? 'bg-amber-600 text-white border-transparent shadow-lg scale-105' : 'bg-amber-500/5 text-amber-600 border-amber-500/20 hover:bg-amber-500/10'}`}
+        >
+          Negociadas
+        </button>
+
+        <button 
+          onClick={() => setStatusFilter('SEM_VINCULO')}
+          className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2 ${statusFilter === 'SEM_VINCULO' ? 'bg-slate-700 text-white border-transparent shadow-lg scale-105' : 'bg-slate-500/5 text-slate-500 border-slate-500/20 hover:bg-slate-500/10'}`}
+        >
+          Sem Vínculo
+        </button>
+
+        {statusFilter !== 'TUDO' && (
+          <button 
+            onClick={() => setStatusFilter('TUDO')}
+            className="p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all ml-1"
+            title="Limpar Filtro"
+          >
+            <FilterX className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
       <div className="flex-grow overflow-y-auto custom-scrollbar pr-2 pb-10">
-        {(masterDebts || []).length === 0 ? (
+        {(filteredDebts || []).length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center border-4 border-dashed border-slate-200 dark:border-slate-800 rounded-[2rem] bg-white/50 dark:bg-slate-900/30 text-center p-10">
             <Calculator className="w-16 h-16 text-slate-200 dark:text-slate-800 mb-4" />
-            <p className="text-[12px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-slate-600">Ledger Universal Vazio</p>
+            <p className="text-[12px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-slate-600">Nenhum Registro para este Filtro</p>
           </div>
         ) : viewMode === 'cards' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-            {masterDebts.map(debt => (
+            {filteredDebts.map(debt => (
               <DebtCard 
                 key={debt.id} 
                 debt={debt} 
@@ -346,12 +415,11 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
                       <th className="px-6 py-4 text-center">Progresso</th>
                       <th className="px-6 py-4 text-right">Valor Total</th>
                       <th className="px-6 py-4 text-right">Saldo Aberto</th>
-                      <th className="px-6 py-4 text-center">Referência</th>
                       <th className="px-6 py-4 text-center">Ações</th>
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                   {(masterDebts || []).map(debt => {
+                   {(filteredDebts || []).map(debt => {
                      const totalValue = (debt.installments || []).reduce((sum, inst) => sum + (Number(inst.value) || 0), 0) + (Number(debt.downPayment) || 0);
                      const remainingValue = (debt.installments || []).filter(i => i.status === 'pending').reduce((sum, inst) => sum + (Number(inst.value) || 0), 0);
                      const paidCount = (debt.installments || []).filter(i => i.status === 'paid').length;
@@ -362,18 +430,18 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
                        <tr key={debt.id} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors group">
                           <td className="px-6 py-4">
                              <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg ${debt.status === 'paid' ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]' : debt.isNegotiation ? 'bg-amber-500/10 text-amber-500' : 'bg-violet-500 text-white'}`}>
-                                  {debt.status === 'paid' ? <Award className="w-4 h-4" /> : <Landmark className="w-4 h-4" />}
+                                <div className={`p-2 rounded-lg ${debt.status === 'paid' || progress === 100 ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]' : debt.isNegotiation ? 'bg-amber-500/10 text-amber-500' : 'bg-violet-500 text-white'}`}>
+                                  {debt.status === 'paid' || progress === 100 ? <Award className="w-4 h-4" /> : <Landmark className="w-4 h-4" />}
                                 </div>
                                 <div className="flex flex-col">
-                                   <span className={`text-xs font-black uppercase truncate max-w-[200px] ${debt.status === 'paid' ? 'text-emerald-500' : 'text-slate-900 dark:text-white'}`}>{debt.item}</span>
+                                   <span className={`text-xs font-black uppercase truncate max-w-[200px] ${debt.status === 'paid' || progress === 100 ? 'text-emerald-500' : 'text-slate-900 dark:text-white'}`}>{debt.item}</span>
                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{debt.subCategory}</span>
                                 </div>
                              </div>
                           </td>
                           <td className="px-6 py-4">
                              <div className="flex items-center">
-                               {debt.status === 'paid' ? (
+                               {debt.status === 'paid' || progress === 100 ? (
                                  <span className="flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase border-2 border-emerald-500/20 shadow-sm animate-pulse"><Sparkles className="w-3 h-3" /> QUITADO</span>
                                ) : !isLinked ? (
                                  <span className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-500/10 text-slate-500 text-[8px] font-black uppercase border border-slate-500/20 opacity-60" title="Item ausente no Inventário do Registro"><LinkIcon className="w-2.5 h-2.5" /> Aguardando Vínculo</span>
@@ -400,9 +468,6 @@ const DividasMaster: React.FC<DividasMasterProps> = ({ masterDebts, setMasterDeb
                           </td>
                           <td className="px-6 py-4 text-right">
                              <span className={`text-[11px] font-black tabular-nums ${remainingValue > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{formatCurrency(remainingValue)}</span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                             <span className="text-[11px] font-black text-slate-500 tabular-nums">{`Dia ${String(debt.dueDay || 0).padStart(2,'0')}`}</span>
                           </td>
                           <td className="px-6 py-4 text-center">
                              <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
